@@ -1,0 +1,88 @@
+@font-face {
+  font-family: 'Estedad';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/Estedad-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Estedad';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/Estedad-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Estedad';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/Estedad-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Estedad';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/Estedad-Bold.woff2') format('woff2');
+}
+
+:root {
+  --primary: #1f6f5c;
+  --primary-hover: #2f8f76;
+  --primary-light: #e6f2ee;
+  --bg: #f7f5ef;
+  --card-bg: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --error: #b91c1c;
+  --success: #16a34a;
+  --radius: 12px;
+  --radius-lg: 20px;
+  --shadow: 0 4px 16px rgba(31, 111, 92, 0.08);
+  --font: 'Estedad', 'Segoe UI', Tahoma, system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-feature-settings: "ss01" 1, "ss02" 1;
+  text-rendering: optimizeLegibility;
+  word-spacing: 0.05em;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+input,
+button,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
