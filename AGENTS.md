@@ -121,26 +121,34 @@ update, test-related task, or other development task.
 
 1. **Inspect Git state first.** Before starting any implementation, check the current
    branch and working tree status.
-2. **Never work directly on `main` or `master`.** All changes must be made on a
+2. **Classify every new task automatically.** Before starting work, determine its
+   type: feature, bug fix, refactoring, documentation, testing, or another
+   appropriate task type. If the task type or scope is genuinely unclear, ask the
+   user for clarification before making changes.
+3. **Create the branch automatically before editing files.** For each new task,
+   create a new, descriptively named branch with the correct prefix before modifying
+   any project files. Branch creation is mandatory; never ask whether a branch
+   should be created.
+4. **Never work directly on `main` or `master`.** All changes must be made on a
    separate branch.
-3. **One branch per independent task.** Do not combine unrelated work in a branch.
-4. **Use descriptive prefixed branch names:**
+5. **Use descriptive prefixed branch names:**
    - `feature/` — new features or enhancements
    - `fix/` — bug fixes
    - `refactor/` — refactoring
    - `docs/` — documentation changes
    - `test/` — test-related tasks
-5. **Branch from the latest appropriate base branch.** Refresh the base before
+6. **Branch from the latest appropriate base branch.** Refresh the base before
    creating a new branch.
-6. **Never reuse an existing branch for an unrelated task.**
-7. **Protect uncommitted work.** Never overwrite, discard, or commit the user's
+7. **One branch per independent task.** For a new independent task, always create a
+   new branch. Do not combine unrelated work in a branch or reuse an existing branch
+   for an unrelated task. For follow-up work that belongs to the same existing task,
+   continue on that task's branch instead of creating an unnecessary new branch.
+8. **Protect uncommitted work.** Never overwrite, discard, or commit the user's
    existing uncommitted changes. If the working tree is dirty, do not switch
    branches or overwrite anything; inspect the changes, explain the situation, and
    ask how to proceed if necessary.
-8. **Keep each branch isolated to its task.** Do not include unrelated changes.
-9. **Verify before completion.** Run the required tests and quality checks for the
-   task before considering it complete.
-10. **No automatic merges into `main`.** Wait for explicit user approval before
-    merging.
-11. **No branch deletion without authorization.** Do not delete branches unless the
-    user explicitly authorizes it.
+9. **Keep each branch isolated to its task.** Do not include unrelated changes.
+10. **Verify before completion.** Run the required tests and quality checks for the
+    task before considering it complete.
+11. **No automatic merges or deletions.** Wait for explicit user approval before
+    merging any branch into `main` (or `master`) or deleting any branch.
