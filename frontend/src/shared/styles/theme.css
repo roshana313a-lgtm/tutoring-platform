@@ -30,6 +30,38 @@
   src: url('./fonts/Estedad-Bold.woff2') format('woff2');
 }
 
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/Vazirmatn-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/Vazirmatn-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/Vazirmatn-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/Vazirmatn-Bold.woff2') format('woff2');
+}
+
 :root {
   --primary: #1f6f5c;
   --primary-hover: #2f8f76;
@@ -44,7 +76,7 @@
   --radius: 12px;
   --radius-lg: 20px;
   --shadow: 0 4px 16px rgba(31, 111, 92, 0.08);
-  --font: 'Estedad', 'Segoe UI', Tahoma, system-ui, sans-serif;
+  --font: 'Vazirmatn', 'Estedad', 'Segoe UI', Tahoma, system-ui, sans-serif;
 }
 
 *,
