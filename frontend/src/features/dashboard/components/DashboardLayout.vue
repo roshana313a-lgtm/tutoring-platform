@@ -242,12 +242,12 @@ async function logout(): Promise<void> {
 
 .sidebar-brand strong {
   display: block;
-  font-size: 0.95rem;
+  font-size: var(--font-size-body);
 }
 
 .sidebar-brand span {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
 
@@ -266,6 +266,7 @@ async function logout(): Promise<void> {
   overflow: hidden;
   border-radius: var(--radius);
   color: var(--text);
+  font-size: var(--font-size-sm);
   font-weight: 500;
   transition:
     background 0.2s ease,
@@ -323,7 +324,7 @@ async function logout(): Promise<void> {
   padding: 9px 12px;
   border-radius: var(--radius);
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: var(--font-size-sm);
   transition:
     background 0.2s ease,
     color 0.2s ease;
@@ -382,14 +383,14 @@ async function logout(): Promise<void> {
 
 .eyebrow {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
 
 h1 {
   margin: 0;
   color: var(--primary);
-  font-size: 1.35rem;
+  font-size: var(--font-size-title);
 }
 
 .topbar-actions {
@@ -425,7 +426,7 @@ h1 {
   outline: 0;
   background: transparent;
   color: var(--text);
-  font-size: 0.88rem;
+  font-size: var(--font-size-body);
 }
 
 .global-search input::placeholder {
@@ -437,7 +438,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--card-bg);
-  font-size: 0.7rem;
+  font-size: var(--font-size-xs);
 }
 
 .icon-button {
@@ -475,7 +476,7 @@ h1 {
   border-radius: 999px;
   background: #dc2626;
   color: #fff;
-  font-size: 0.68rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
 }
 
@@ -508,12 +509,12 @@ h1 {
 }
 
 .user-name {
-  font-size: 0.85rem;
+  font-size: var(--font-size-xs);
   font-weight: 600;
 }
 
 .user-role {
-  font-size: 0.72rem;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
 
@@ -527,6 +528,7 @@ h1 {
   border-radius: var(--radius);
   background: transparent;
   color: var(--primary);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   transition:

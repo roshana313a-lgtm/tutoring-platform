@@ -281,13 +281,13 @@ const displayName = computed(() => {
 .eyebrow {
   margin: 0 0 4px;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
 }
 
 .welcome h2 {
   margin: 0;
   color: var(--primary);
-  font-size: 1.4rem;
+  font-size: var(--font-size-title);
 }
 
 .welcome-subtitle {
@@ -300,6 +300,7 @@ const displayName = computed(() => {
   border-radius: 999px;
   background: var(--primary-light);
   color: var(--primary);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -350,13 +351,13 @@ const displayName = computed(() => {
 .card-label {
   padding-left: 48px;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
 .card-value {
   color: var(--primary);
-  font-size: 2.2rem;
+  font-size: var(--font-size-title);
   line-height: 1.1;
 }
 
@@ -374,7 +375,7 @@ const displayName = computed(() => {
   gap: 3px;
   padding: 3px 8px;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
 }
 
@@ -390,7 +391,7 @@ const displayName = computed(() => {
 
 .card-hint {
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: var(--font-size-xs);
   text-align: left;
 }
 
@@ -419,13 +420,13 @@ const displayName = computed(() => {
 .card-header h2 {
   margin: 0;
   color: var(--primary);
-  font-size: 1.1rem;
+  font-size: var(--font-size-title);
 }
 
 .card-header p {
   margin: 4px 0 0;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--font-size-xs);
 }
 
 .view-all {
@@ -436,7 +437,7 @@ const displayName = computed(() => {
   border: 0;
   background: transparent;
   color: var(--primary);
-  font-size: 0.82rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -460,12 +461,12 @@ const displayName = computed(() => {
 .activity-table td {
   padding: 13px 10px;
   border-bottom: 1px solid var(--border);
+  font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
 .activity-table th {
   color: var(--text-muted);
-  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -520,7 +521,7 @@ const displayName = computed(() => {
 
 .bar-column span {
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: var(--font-size-xs);
   white-space: nowrap;
 }
 

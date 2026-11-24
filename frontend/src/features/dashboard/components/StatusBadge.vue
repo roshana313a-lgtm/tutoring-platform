@@ -38,7 +38,7 @@ const icon = computed<Component>(() => {
   gap: 5px;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   white-space: nowrap;
 }
