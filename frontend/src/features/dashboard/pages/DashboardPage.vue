@@ -69,13 +69,13 @@ async function logout(): Promise<void> {
 .institute-name {
   margin: 0 0 4px;
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: var(--font-size-xs);
 }
 
 h1 {
   margin: 0;
   color: var(--primary);
-  font-size: 1.6rem;
+  font-size: var(--font-size-title);
 }
 
 .logout-button {
@@ -84,6 +84,7 @@ h1 {
   border-radius: var(--radius);
   background: transparent;
   color: var(--primary);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -108,18 +109,19 @@ h1 {
 
 h2 {
   margin: 0 0 18px;
-  font-size: 1.25rem;
+  font-size: var(--font-size-title);
 }
 
 .user-email {
   margin: 0 0 8px;
-  font-size: 1rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
 .user-role {
   margin: 0;
   color: var(--text-muted);
+  font-size: var(--font-size-sm);
 }
 
 @media (max-width: 600px) {

@@ -45,6 +45,12 @@
   --radius-lg: 20px;
   --shadow: 0 4px 16px rgba(31, 111, 92, 0.08);
   --font: 'Estedad', 'Segoe UI', Tahoma, system-ui, sans-serif;
+
+  /* Type scale */
+  --font-size-body: 0.875rem; /* 14px — main body text */
+  --font-size-sm: 0.8125rem; /* 13px — table text, card subtitles, sidebar links */
+  --font-size-title: 1.125rem; /* 18px — page titles, card main numbers */
+  --font-size-xs: 0.75rem; /* 12px — top-bar user name, small labels */
 }
 
 *,
@@ -64,6 +70,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
+  font-size: var(--font-size-body);
   font-feature-settings: "ss01" 1, "ss02" 1;
   text-rendering: optimizeLegibility;
   word-spacing: 0.05em;
