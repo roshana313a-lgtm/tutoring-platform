@@ -111,3 +111,36 @@ E:\ES
 ├── docker-compose.yml
 └── .github/workflows/ci.yml
 ```
+
+---
+
+## 5. Git Branching Policy
+
+Applies to every new feature, enhancement, bug fix, refactoring task, documentation
+update, test-related task, or other development task.
+
+1. **Inspect Git state first.** Before starting any implementation, check the current
+   branch and working tree status.
+2. **Never work directly on `main` or `master`.** All changes must be made on a
+   separate branch.
+3. **One branch per independent task.** Do not combine unrelated work in a branch.
+4. **Use descriptive prefixed branch names:**
+   - `feature/` — new features or enhancements
+   - `fix/` — bug fixes
+   - `refactor/` — refactoring
+   - `docs/` — documentation changes
+   - `test/` — test-related tasks
+5. **Branch from the latest appropriate base branch.** Refresh the base before
+   creating a new branch.
+6. **Never reuse an existing branch for an unrelated task.**
+7. **Protect uncommitted work.** Never overwrite, discard, or commit the user's
+   existing uncommitted changes. If the working tree is dirty, do not switch
+   branches or overwrite anything; inspect the changes, explain the situation, and
+   ask how to proceed if necessary.
+8. **Keep each branch isolated to its task.** Do not include unrelated changes.
+9. **Verify before completion.** Run the required tests and quality checks for the
+   task before considering it complete.
+10. **No automatic merges into `main`.** Wait for explicit user approval before
+    merging.
+11. **No branch deletion without authorization.** Do not delete branches unless the
+    user explicitly authorizes it.
