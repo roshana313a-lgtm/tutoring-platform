@@ -166,7 +166,12 @@ const roleLabel = computed(() => {
   }
 })
 
+const hasFullName = computed(() => Boolean(auth.user?.full_name?.trim()))
+
 const displayName = computed(() => {
+  const fullName = auth.user?.full_name?.trim()
+  if (fullName) return fullName
+
   const email = auth.user?.email
   return email ? email.split('@')[0] : '—'
 })
@@ -181,6 +186,13 @@ const displayName = computed(() => {
         <p class="welcome-subtitle">خلاصهای از وضعیت آموزشی و فعالیتهای اخیر شما</p>
       </div>
       <span class="role-chip">{{ roleLabel }}</span>
+    </div>
+
+    <div v-if="!hasFullName" class="onboarding-banner" data-test="onboarding-banner">
+      <span>لطفاً برای تکمیل حساب خود، اطلاعات پروفایل خود را وارد کنید.</span>
+      <RouterLink to="/dashboard/profile" class="onboarding-link">
+        تکمیل پروفایل
+      </RouterLink>
     </div>
 
     <div class="summary-grid" data-test="summary-cards">
@@ -303,6 +315,35 @@ const displayName = computed(() => {
   font-size: var(--font-size-sm);
   font-weight: 600;
   white-space: nowrap;
+}
+
+.onboarding-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 22px;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-lg);
+  background: #fef3c7;
+  color: #92400e;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.onboarding-link {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  background: #f59e0b;
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.onboarding-link:hover {
+  background: #d97706;
 }
 
 .summary-grid {

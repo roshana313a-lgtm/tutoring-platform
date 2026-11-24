@@ -3,15 +3,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   post: vi.fn(),
   get: vi.fn(),
+  put: vi.fn(),
 }))
 
 vi.mock('axios', () => ({
   default: {
-    create: () => ({ get: mocks.get, post: mocks.post }),
+    create: () => ({ get: mocks.get, post: mocks.post, put: mocks.put }),
   },
 }))
 
-import { fetchCurrentUser, login, register } from '../../src/features/auth/api/auth'
+import { fetchCurrentUser, login, register, updateProfile } from '../../src/features/auth/api/auth'
 import { ApiError, clearStoredToken } from '../../src/shared/api/http'
 
 const student = {
@@ -34,6 +35,7 @@ function axiosFailure(status: number, code: string, message: string) {
 beforeEach(() => {
   mocks.post.mockReset()
   mocks.get.mockReset()
+  mocks.put.mockReset()
   clearStoredToken()
 })
 
@@ -121,5 +123,27 @@ describe('auth API', () => {
 
     await expect(fetchCurrentUser()).resolves.toEqual(student)
     expect(mocks.get).toHaveBeenCalledWith('/api/v1/auth/me')
+  })
+
+  it('puts the profile payload to the full endpoint and returns the updated user', async () => {
+    const updated = { ...student, full_name: 'علی احمدی', years_of_experience: 5 }
+    mocks.put.mockResolvedValueOnce({ data: updated })
+
+    await expect(
+      updateProfile({ full_name: 'علی احمدی', years_of_experience: 5 }),
+    ).resolves.toEqual(updated)
+    expect(mocks.put).toHaveBeenCalledWith('/api/v1/auth/profile', {
+      full_name: 'علی احمدی',
+      years_of_experience: 5,
+    })
+  })
+
+  it('maps a 422 profile validation response to a typed ApiError', async () => {
+    mocks.put.mockRejectedValueOnce(axiosFailure(422, 'VALIDATION_ERROR', 'Invalid input'))
+
+    await expect(updateProfile({ bio: 'not allowed' })).rejects.toMatchObject({
+      status: 422,
+      code: 'VALIDATION_ERROR',
+    })
   })
 })

@@ -92,6 +92,7 @@ applyAuthorizationHeader(getStoredToken())
 export interface Http {
   get<T>(url: string, config?: AxiosRequestConfig): Promise<T>
   post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
+  put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
 }
 
 async function unwrap<T>(execute: () => Promise<{ data: T }>): Promise<T> {
@@ -114,6 +115,13 @@ export const http: Http = {
       config
         ? client.post<T, { data: T }>(url, data, config)
         : client.post<T, { data: T }>(url, data),
+    )
+  },
+  put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+    return unwrap(() =>
+      config
+        ? client.put<T, { data: T }>(url, data, config)
+        : client.put<T, { data: T }>(url, data),
     )
   },
 }

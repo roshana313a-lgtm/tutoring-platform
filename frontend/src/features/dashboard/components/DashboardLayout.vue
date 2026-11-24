@@ -15,6 +15,7 @@ import {
   Search,
   Settings,
   TrendingUp,
+  UserRound,
   Users,
 } from 'lucide-vue-next'
 
@@ -38,6 +39,7 @@ const studentMenu: MenuItem[] = [
   { label: 'کلاس‌های من', to: { name: 'dashboard-classes' }, icon: CalendarDays },
   { label: 'تکالیف من', to: { name: 'dashboard-homework' }, icon: BookOpen },
   { label: 'پیشرفت من', to: { name: 'dashboard-progress' }, icon: TrendingUp },
+  { label: 'پروفایل من', to: { name: 'dashboard-profile' }, icon: UserRound },
 ]
 
 const instructorMenu: MenuItem[] = [
@@ -46,6 +48,7 @@ const instructorMenu: MenuItem[] = [
   { label: 'دانشجویان من', to: { name: 'dashboard-students' }, icon: Users },
   { label: 'ارسال تکلیف', to: { name: 'dashboard-homework-new' }, icon: ClipboardList },
   { label: 'ارزیابی‌ها', to: { name: 'dashboard-evaluations' }, icon: ClipboardCheck },
+  { label: 'پروفایل من', to: { name: 'dashboard-profile' }, icon: UserRound },
 ]
 
 const adminMenu: MenuItem[] = [
@@ -54,6 +57,7 @@ const adminMenu: MenuItem[] = [
   { label: 'مدیریت کاربران', to: { name: 'dashboard-users' }, icon: Users },
   { label: 'کیفیت خدمات', to: { name: 'dashboard-quality' }, icon: ChartNoAxesColumn },
   { label: 'تنظیمات', to: { name: 'dashboard-settings' }, icon: Settings },
+  { label: 'پروفایل من', to: { name: 'dashboard-profile' }, icon: UserRound },
 ]
 
 const menuItems = computed<MenuItem[]>(() => {
@@ -83,6 +87,9 @@ const roleLabel = computed(() => {
 })
 
 const displayName = computed(() => {
+  const fullName = auth.user?.full_name?.trim()
+  if (fullName) return fullName
+
   const email = auth.user?.email
   return email ? email.split('@')[0] : '—'
 })

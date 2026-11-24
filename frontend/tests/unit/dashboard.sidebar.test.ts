@@ -56,6 +56,7 @@ describe('DashboardLayout role-based sidebar', () => {
       'کلاس‌های من',
       'تکالیف من',
       'پیشرفت من',
+      'پروفایل من',
     ])
   })
 
@@ -68,6 +69,7 @@ describe('DashboardLayout role-based sidebar', () => {
       'دانشجویان من',
       'ارسال تکلیف',
       'ارزیابی‌ها',
+      'پروفایل من',
     ])
   })
 
@@ -80,6 +82,7 @@ describe('DashboardLayout role-based sidebar', () => {
       'مدیریت کاربران',
       'کیفیت خدمات',
       'تنظیمات',
+      'پروفایل من',
     ])
   })
 

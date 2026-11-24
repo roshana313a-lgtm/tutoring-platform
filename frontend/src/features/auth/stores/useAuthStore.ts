@@ -5,7 +5,9 @@ import {
   fetchCurrentUser,
   login as apiLogin,
   register as apiRegister,
+  updateProfile as apiUpdateProfile,
   type LoginPayload,
+  type ProfileUpdatePayload,
   type RegisterPayload,
   type User,
 } from '../api/auth'
@@ -36,6 +38,12 @@ export const useAuthStore = defineStore('auth', () => {
     return result
   }
 
+  async function updateProfile(payload: ProfileUpdatePayload): Promise<User> {
+    const updated = await apiUpdateProfile(payload)
+    user.value = updated
+    return updated
+  }
+
   function logout(): void {
     user.value = null
     token.value = null
@@ -52,5 +60,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, token, isAuthenticated, register, login, logout, hydrate }
+  return { user, token, isAuthenticated, register, login, updateProfile, logout, hydrate }
 })

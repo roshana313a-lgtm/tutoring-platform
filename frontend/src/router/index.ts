@@ -4,6 +4,7 @@ import DashboardLayout from '../features/dashboard/components/DashboardLayout.vu
 import { authGuard } from './guards'
 
 const DashboardPage = () => import('../features/dashboard/pages/DashboardPage.vue')
+const ProfileSettingsPage = () => import('../features/profile/pages/ProfileSettingsPage.vue')
 
 export const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/login' },
@@ -27,6 +28,12 @@ export const routes: RouteRecordRaw[] = [
         name: 'dashboard',
         component: DashboardPage,
         meta: { title: 'داشبورد' },
+      },
+      {
+        path: 'profile',
+        name: 'dashboard-profile',
+        component: ProfileSettingsPage,
+        meta: { title: 'پروفایل من' },
       },
       {
         path: 'instructor-search',

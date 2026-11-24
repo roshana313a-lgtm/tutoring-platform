@@ -13,6 +13,14 @@ class InvalidTokenError(Exception):
     """Raised when a JWT access token is missing, malformed, expired, or invalid."""
 
 
+class RoleFieldNotAllowedError(ValueError):
+    """Raised when a profile field belonging to another role is supplied."""
+
+    def __init__(self, fields: list[str]) -> None:
+        self.fields = fields
+        super().__init__(f"Fields not allowed for this role: {', '.join(fields)}")
+
+
 def error_response(
     status_code: int,
     code: str,

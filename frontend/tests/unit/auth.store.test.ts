@@ -5,9 +5,10 @@ vi.mock('../../src/features/auth/api/auth', () => ({
   register: vi.fn(),
   login: vi.fn(),
   fetchCurrentUser: vi.fn(),
+  updateProfile: vi.fn(),
 }))
 
-import { fetchCurrentUser, login, register } from '../../src/features/auth/api/auth'
+import { fetchCurrentUser, login, register, updateProfile } from '../../src/features/auth/api/auth'
 import { useAuthStore } from '../../src/features/auth/stores/useAuthStore'
 import { clearStoredToken, getStoredToken } from '../../src/shared/api/http'
 
@@ -24,6 +25,7 @@ beforeEach(() => {
   vi.mocked(register).mockReset()
   vi.mocked(login).mockReset()
   vi.mocked(fetchCurrentUser).mockReset()
+  vi.mocked(updateProfile).mockReset()
 })
 
 describe('useAuthStore', () => {

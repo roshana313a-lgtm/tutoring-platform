@@ -5,9 +5,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.core.deps import get_current_user
-from app.core.errors import EmailAlreadyExistsError, InvalidCredentialsError
+from app.core.errors import (
+    EmailAlreadyExistsError,
+    InvalidCredentialsError,
+    RoleFieldNotAllowedError,
+)
 from app.models.user import User
-from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest, UserResponse
+from app.repositories.user_repository import UserRepository
+from app.schemas.auth import (
+    AuthResponse,
+    LoginRequest,
+    ProfileUpdateRequest,
+    RegisterRequest,
+    UserResponse,
+)
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -61,3 +72,25 @@ async def me(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> UserResponse:
     return UserResponse.model_validate(current_user)
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    data: ProfileUpdateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> UserResponse:
+    try:
+        fields = data.fields_for_role(current_user.role)
+    except RoleFieldNotAllowedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "VALIDATION_ERROR",
+                "message": "Fields not allowed for this role",
+                "details": {"fields": exc.fields},
+            },
+        ) from exc
+
+    user = await UserRepository(db).update(current_user, fields)
+    return UserResponse.model_validate(user)
