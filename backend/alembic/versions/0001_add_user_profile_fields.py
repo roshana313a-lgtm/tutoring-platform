@@ -20,45 +20,61 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
+def _existing_columns(table: str) -> set[str]:
+    insp = sa.inspect(op.get_bind())
+    if not insp.has_table(table):
+        return set()
+    return {col["name"] for col in insp.get_columns(table)}
+
+
 def upgrade() -> None:
-    op.add_column(
-        "users",
-        sa.Column("full_name", sa.String(length=255), nullable=False, server_default=""),
-    )
-    op.add_column(
-        "users",
-        sa.Column("phone_number", sa.String(length=50), nullable=False, server_default=""),
-    )
-    op.add_column(
-        "users",
-        sa.Column("avatar_url", sa.String(length=1024), nullable=False, server_default=""),
-    )
-    op.add_column(
-        "users",
-        sa.Column(
-            "timezone",
-            sa.String(length=64),
-            nullable=False,
-            server_default="Asia/Tehran",
-        ),
-    )
-    op.add_column(
-        "users",
-        sa.Column("bio", sa.Text(), nullable=False, server_default=""),
-    )
-    op.add_column(
-        "users",
-        sa.Column(
-            "years_of_experience",
-            sa.Integer(),
-            nullable=False,
-            server_default="0",
-        ),
-    )
-    op.add_column(
-        "users",
-        sa.Column("current_level", sa.String(length=64), nullable=False, server_default=""),
-    )
+    existing = _existing_columns("users")
+
+    if "full_name" not in existing:
+        op.add_column(
+            "users",
+            sa.Column("full_name", sa.String(length=255), nullable=False, server_default=""),
+        )
+    if "phone_number" not in existing:
+        op.add_column(
+            "users",
+            sa.Column("phone_number", sa.String(length=50), nullable=False, server_default=""),
+        )
+    if "avatar_url" not in existing:
+        op.add_column(
+            "users",
+            sa.Column("avatar_url", sa.String(length=1024), nullable=False, server_default=""),
+        )
+    if "timezone" not in existing:
+        op.add_column(
+            "users",
+            sa.Column(
+                "timezone",
+                sa.String(length=64),
+                nullable=False,
+                server_default="Asia/Tehran",
+            ),
+        )
+    if "bio" not in existing:
+        op.add_column(
+            "users",
+            sa.Column("bio", sa.Text(), nullable=False, server_default=""),
+        )
+    if "years_of_experience" not in existing:
+        op.add_column(
+            "users",
+            sa.Column(
+                "years_of_experience",
+                sa.Integer(),
+                nullable=False,
+                server_default="0",
+            ),
+        )
+    if "current_level" not in existing:
+        op.add_column(
+            "users",
+            sa.Column("current_level", sa.String(length=64), nullable=False, server_default=""),
+        )
 
 
 def downgrade() -> None:

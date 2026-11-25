@@ -1,4 +1,6 @@
 import asyncio
+import os
+import sys
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -6,6 +8,11 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
+
+# The alembic CLI does not put the working directory on sys.path, so make the
+# backend root (parent of this file's directory) importable regardless of cwd.
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 from app.core.config import settings
 from app.core.db import Base
 from app.models.user import User  # noqa: F401 - register the model with Base.metadata
@@ -37,6 +44,14 @@ def do_run_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
     )
+
+    # Create tables from models when missing (e.g. fresh dev.db with no base
+    # migration). Existing tables are left unchanged; Alembic migrations handle
+    # schema evolution from there.
+    Base.metadata.create_all(connection)
+    if connection.in_transaction():
+        connection.commit()
+
     with context.begin_transaction():
         context.run_migrations()
 
