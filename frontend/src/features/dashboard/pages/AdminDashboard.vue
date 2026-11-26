@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Activity, GraduationCap, Server, ShieldCheck, Users } from 'lucide-vue-next'
+import { RouterLink, type RouteLocationRaw } from 'vue-router'
+import { Activity, ChevronLeft, GraduationCap, Server, ShieldCheck, Users } from 'lucide-vue-next'
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
 import StatusBadge from '../components/StatusBadge.vue'
@@ -9,6 +10,7 @@ interface StatSummary {
   title: string
   value: string
   hint: string
+  to?: RouteLocationRaw
 }
 
 interface HealthRow {
@@ -22,7 +24,12 @@ const auth = useAuthStore()
 
 const stats: StatSummary[] = [
   { title: 'کاربران فعال', value: '۱٬۲۴۸', hint: 'در ۳۰ روز گذشته' },
-  { title: 'مدرسان در انتظار تایید', value: '۷', hint: 'درخواست بررسی نشده' },
+  {
+    title: 'مدرسان در انتظار تایید',
+    value: '۷',
+    hint: 'درخواست بررسی نشده',
+    to: { name: 'dashboard-admin-instructors' },
+  },
 ]
 
 const health: HealthRow[] = [
@@ -52,7 +59,15 @@ const displayName = computed(() => {
     </header>
 
     <div class="stat-grid" data-test="admin-stats">
-      <article v-for="stat in stats" :key="stat.title" class="stat-card" data-test="admin-stat">
+      <component
+        :is="stat.to ? RouterLink : 'article'"
+        v-for="stat in stats"
+        :key="stat.title"
+        :to="stat.to"
+        class="stat-card"
+        :class="{ 'stat-card-link': stat.to }"
+        :data-test="stat.to ? 'admin-pending-instructors-link' : 'admin-stat'"
+      >
         <span class="stat-icon" aria-hidden="true">
           <Users v-if="stat.title === 'کاربران فعال'" :size="19" :stroke-width="1.9" />
           <GraduationCap v-else :size="19" :stroke-width="1.9" />
@@ -60,7 +75,11 @@ const displayName = computed(() => {
         <span class="stat-label">{{ stat.title }}</span>
         <strong class="stat-value">{{ stat.value }}</strong>
         <span class="stat-hint">{{ stat.hint }}</span>
-      </article>
+        <span v-if="stat.to" class="stat-cta">
+          بررسی درخواست‌ها
+          <ChevronLeft :size="14" />
+        </span>
+      </component>
     </div>
 
     <section class="panel" data-test="platform-health">
@@ -189,6 +208,29 @@ const displayName = computed(() => {
   margin-top: auto;
   color: var(--text-muted);
   font-size: var(--font-size-xs);
+}
+
+.stat-card-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.stat-card-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px -8px rgba(31, 111, 92, 0.25);
+}
+
+.stat-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
 }
 
 .panel {

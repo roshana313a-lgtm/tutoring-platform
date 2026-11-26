@@ -15,6 +15,7 @@ import {
   Search,
   Settings,
   TrendingUp,
+  UserCheck,
   UserRound,
   Users,
 } from 'lucide-vue-next'
@@ -53,6 +54,7 @@ const instructorMenu: MenuItem[] = [
 
 const adminMenu: MenuItem[] = [
   { label: 'مدیریت مدرسان', to: { name: 'dashboard-manage-instructors' }, icon: GraduationCap },
+  { label: 'تایید مدرسان', to: { name: 'dashboard-admin-instructors' }, icon: UserCheck },
   { label: 'مدیریت کاربران', to: { name: 'dashboard-users' }, icon: Users },
   { label: 'کیفیت خدمات', to: { name: 'dashboard-quality' }, icon: ChartNoAxesColumn },
   { label: 'تنظیمات', to: { name: 'dashboard-settings' }, icon: Settings },

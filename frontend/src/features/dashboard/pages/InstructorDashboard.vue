@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CalendarCheck, ChevronLeft, ClipboardCheck, Clock } from 'lucide-vue-next'
+import { CalendarCheck, ChevronLeft, ClipboardCheck, Clock, ShieldAlert } from 'lucide-vue-next'
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
 import StatusBadge from '../components/StatusBadge.vue'
@@ -50,6 +50,8 @@ const bookingRequests: BookingRequest[] = [
   },
 ]
 
+const isApproved = computed(() => auth.user?.is_approved !== false)
+
 const displayName = computed(() => {
   const fullName = auth.user?.full_name?.trim()
   if (fullName) return fullName
@@ -61,6 +63,16 @@ const displayName = computed(() => {
 
 <template>
   <section class="dashboard-page" data-test="instructor-dashboard">
+    <div v-if="!isApproved" class="approval-banner" data-test="approval-banner">
+      <ShieldAlert :size="20" :stroke-width="2" class="approval-icon" aria-hidden="true" />
+      <div>
+        <strong>حساب شما در انتظار تایید مدیر است</strong>
+        <p>
+          پروفایل شما هنوز توسط مدیر تایید نشده است. تا آن زمان در لیست جستجو نمایش داده نمی‌شوید.
+        </p>
+      </div>
+    </div>
+
     <header class="welcome">
       <div>
         <p class="eyebrow">نمای مدرس</p>
@@ -134,6 +146,34 @@ const displayName = computed(() => {
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
+}
+
+.approval-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-lg);
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.approval-icon {
+  flex: none;
+  margin-top: 2px;
+}
+
+.approval-banner strong {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.approval-banner p {
+  margin: 4px 0 0;
+  font-size: var(--font-size-xs);
+  line-height: 1.7;
 }
 
 .eyebrow {

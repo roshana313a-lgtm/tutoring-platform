@@ -24,6 +24,19 @@ class UserRepository:
         await self.db.refresh(user)
         return user
 
+    async def list_unapproved(self, role: str) -> list[User]:
+        """Users of `role` that are still waiting for admin approval."""
+        result = await self.db.execute(
+            select(User)
+            .where(User.role == role, User.is_approved.is_(False))
+            .order_by(User.created_at)
+        )
+        return list(result.scalars().all())
+
+    async def delete(self, user: User) -> None:
+        await self.db.delete(user)
+        await self.db.commit()
+
     async def update(self, user: User, fields: dict[str, object]) -> User:
         for name, value in fields.items():
             if value is not None:

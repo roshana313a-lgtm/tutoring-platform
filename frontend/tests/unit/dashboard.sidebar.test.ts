@@ -79,6 +79,7 @@ describe('DashboardLayout role-based sidebar', () => {
     expect(sidebarLabels(wrapper)).toEqual([
       'داشبورد',
       'مدیریت مدرسان',
+      'تایید مدرسان',
       'مدیریت کاربران',
       'کیفیت خدمات',
       'تنظیمات',

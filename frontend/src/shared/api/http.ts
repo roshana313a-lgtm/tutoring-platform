@@ -93,6 +93,7 @@ export interface Http {
   get<T>(url: string, config?: AxiosRequestConfig): Promise<T>
   post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
   put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
+  patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>
 }
 
 async function unwrap<T>(execute: () => Promise<{ data: T }>): Promise<T> {
@@ -122,6 +123,13 @@ export const http: Http = {
       config
         ? client.put<T, { data: T }>(url, data, config)
         : client.put<T, { data: T }>(url, data),
+    )
+  },
+  patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+    return unwrap(() =>
+      config
+        ? client.patch<T, { data: T }>(url, data, config)
+        : client.patch<T, { data: T }>(url, data),
     )
   },
 }
