@@ -12,6 +12,9 @@ node_modules/
 dist/
 .vite/
 
+# Uploaded media (local dev)
+backend/media/
+
 # Local database
 *.db
 *.sqlite

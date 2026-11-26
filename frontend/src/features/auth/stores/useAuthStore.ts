@@ -44,6 +44,13 @@ export const useAuthStore = defineStore('auth', () => {
     return updated
   }
 
+  // The upload endpoint stores the file before the profile form is saved, so the
+  // store is updated right away to let the UI (top bar, preview) re-render.
+  function setAvatar(avatarUrl: string): void {
+    if (!user.value) return
+    user.value = { ...user.value, avatar_url: avatarUrl }
+  }
+
   function logout(): void {
     user.value = null
     token.value = null
@@ -60,5 +67,15 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, token, isAuthenticated, register, login, updateProfile, logout, hydrate }
+  return {
+    user,
+    token,
+    isAuthenticated,
+    register,
+    login,
+    updateProfile,
+    setAvatar,
+    logout,
+    hydrate,
+  }
 })

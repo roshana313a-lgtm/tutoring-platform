@@ -12,6 +12,7 @@ dependencies = [
     "pydantic",
     "pydantic-settings",
     "email-validator",
+    "python-multipart",
     "passlib[bcrypt]",
     "bcrypt<4.1",
     "pyjwt",

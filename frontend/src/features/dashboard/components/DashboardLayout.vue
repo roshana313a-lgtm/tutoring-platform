@@ -20,6 +20,7 @@ import {
 } from 'lucide-vue-next'
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
+import { resolveMediaUrl } from '../../../shared/api/media'
 
 interface MenuItem {
   label: string
@@ -39,7 +40,7 @@ const studentMenu: MenuItem[] = [
   { label: 'کلاس‌های من', to: { name: 'dashboard-classes' }, icon: CalendarDays },
   { label: 'تکالیف من', to: { name: 'dashboard-homework' }, icon: BookOpen },
   { label: 'پیشرفت من', to: { name: 'dashboard-progress' }, icon: TrendingUp },
-  { label: 'پروفایل من', to: { name: 'dashboard-profile' }, icon: UserRound },
+  { label: 'پروفایل من', to: { name: 'profile' }, icon: UserRound },
 ]
 
 const instructorMenu: MenuItem[] = [
@@ -48,7 +49,7 @@ const instructorMenu: MenuItem[] = [
   { label: 'دانشجویان من', to: { name: 'dashboard-students' }, icon: Users },
   { label: 'ارسال تکلیف', to: { name: 'dashboard-homework-new' }, icon: ClipboardList },
   { label: 'ارزیابی‌ها', to: { name: 'dashboard-evaluations' }, icon: ClipboardCheck },
-  { label: 'پروفایل من', to: { name: 'dashboard-profile' }, icon: UserRound },
+  { label: 'پروفایل من', to: { name: 'profile' }, icon: UserRound },
 ]
 
 const adminMenu: MenuItem[] = [
@@ -57,7 +58,7 @@ const adminMenu: MenuItem[] = [
   { label: 'مدیریت کاربران', to: { name: 'dashboard-users' }, icon: Users },
   { label: 'کیفیت خدمات', to: { name: 'dashboard-quality' }, icon: ChartNoAxesColumn },
   { label: 'تنظیمات', to: { name: 'dashboard-settings' }, icon: Settings },
-  { label: 'پروفایل من', to: { name: 'dashboard-profile' }, icon: UserRound },
+  { label: 'پروفایل من', to: { name: 'profile' }, icon: UserRound },
 ]
 
 const menuItems = computed<MenuItem[]>(() => {
@@ -95,6 +96,8 @@ const displayName = computed(() => {
 })
 
 const avatarInitial = computed(() => displayName.value.charAt(0).toUpperCase())
+
+const avatarSrc = computed(() => resolveMediaUrl(auth.user?.avatar_url))
 
 const pageTitle = computed(() => {
   const title = route.meta.title
@@ -190,7 +193,10 @@ async function logout(): Promise<void> {
           </button>
 
           <div class="user-menu" data-test="topbar-user">
-            <span class="avatar">{{ avatarInitial }}</span>
+            <span class="avatar" data-test="topbar-avatar">
+              <img v-if="avatarSrc" :src="avatarSrc" alt="" />
+              <template v-else>{{ avatarInitial }}</template>
+            </span>
             <div class="user-meta">
               <span class="user-name">{{ displayName }}</span>
               <span class="user-role">{{ roleLabel }}</span>
@@ -502,10 +508,17 @@ h1 {
   place-items: center;
   width: 34px;
   height: 34px;
+  overflow: hidden;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #fff;
   font-weight: 700;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .user-meta {

@@ -71,6 +71,38 @@ describe('profile data display', () => {
     expect(wrapper.get('[data-test="topbar-user"]').text()).not.toContain('@example.com')
   })
 
+  it('shows the uploaded avatar in the top bar', async () => {
+    const wrapper = await mountWithUser(
+      DashboardLayout,
+      makeUser({ full_name: 'علی احمدی', avatar_url: '/media/avatars/abc.png' }),
+    )
+
+    expect(wrapper.get('[data-test="topbar-avatar"] img').attributes('src')).toBe(
+      '/media/avatars/abc.png',
+    )
+  })
+
+  it('falls back to the avatar initial when no avatar is stored', async () => {
+    const wrapper = await mountWithUser(DashboardLayout, makeUser({ full_name: 'علی احمدی' }))
+
+    const avatar = wrapper.get('[data-test="topbar-avatar"]')
+    expect(avatar.find('img').exists()).toBe(false)
+    expect(avatar.text()).toBe('ع')
+  })
+
+  it('re-renders the top bar avatar after the store receives a new url', async () => {
+    const wrapper = await mountWithUser(DashboardLayout, makeUser({ full_name: 'علی احمدی' }))
+    expect(wrapper.find('[data-test="topbar-avatar"] img').exists()).toBe(false)
+
+    const auth = useAuthStore()
+    auth.setAvatar('/media/avatars/after-upload.png')
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="topbar-avatar"] img').attributes('src')).toBe(
+      '/media/avatars/after-upload.png',
+    )
+  })
+
   it('greets the user by full name', async () => {
     const wrapper = await mountWithUser(DashboardPage, makeUser({ full_name: 'سارا کریمی' }))
 
@@ -89,6 +121,6 @@ describe('profile data display', () => {
 
     const banner = wrapper.get('[data-test="onboarding-banner"]')
     expect(banner.text()).toContain(BANNER_TEXT)
-    expect(banner.get('a').attributes('href')).toBe('/dashboard/profile')
+    expect(banner.get('a').attributes('href')).toBe('/profile')
   })
 })
