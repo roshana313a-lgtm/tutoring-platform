@@ -7,10 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.core.deps import require_role
 from app.models.user import User
+from app.repositories.setting_repository import SettingsRepository
 from app.repositories.user_repository import UserRepository
+from app.schemas.admin import PlatformSettingsResponse, PlatformSettingsUpdate
 from app.schemas.auth import UserResponse
+from app.services.platform_settings import build_settings
 
 INSTRUCTOR_ROLE = "instructor"
+# Roles the admin user-management screen can list and suspend (admins excluded).
+MANAGED_ROLES = ["student", "instructor"]
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -29,6 +34,59 @@ async def _get_instructor(repo: UserRepository, instructor_id: uuid.UUID) -> Use
     if user is None or user.role != INSTRUCTOR_ROLE:
         raise _instructor_not_found()
     return user
+
+
+@router.get("/users", response_model=list[UserResponse])
+async def list_users(
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[UserResponse]:
+    """All students and instructors, newest first."""
+    users = await UserRepository(db).list_by_roles(MANAGED_ROLES)
+    return [UserResponse.model_validate(user) for user in users]
+
+
+@router.patch("/users/{user_id}/suspend", response_model=UserResponse)
+async def toggle_user_suspension(
+    user_id: uuid.UUID,
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> UserResponse:
+    """Suspend an active student/instructor, or reactivate a suspended one."""
+    repo = UserRepository(db)
+    user = await repo.get_by_id(user_id)
+    if user is None or user.role not in MANAGED_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "USER_NOT_FOUND", "message": "User not found"},
+        )
+
+    updated = await repo.update(user, {"is_active": not user.is_active})
+    return UserResponse.model_validate(updated)
+
+
+@router.get("/settings", response_model=PlatformSettingsResponse)
+async def read_settings(
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PlatformSettingsResponse:
+    """Institute-wide settings, falling back to defaults for missing rows."""
+    return build_settings(await SettingsRepository(db).get_all())
+
+
+@router.put("/settings", response_model=PlatformSettingsResponse)
+async def update_settings(
+    data: PlatformSettingsUpdate,
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PlatformSettingsResponse:
+    """Update the supplied settings and return the full, merged result."""
+    repo = SettingsRepository(db)
+    changes = data.model_dump(exclude_none=True)
+    if changes:
+        await repo.upsert({key: str(value) for key, value in changes.items()})
+
+    return build_settings(await repo.get_all())
 
 
 @router.get("/instructors/pending", response_model=list[UserResponse])

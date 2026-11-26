@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.core.errors import (
+    AccountSuspendedError,
     EmailAlreadyExistsError,
     InvalidCredentialsError,
     RoleFieldNotAllowedError,
@@ -62,6 +63,14 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": "INVALID_CREDENTIALS", "message": str(exc)},
+        ) from exc
+    except AccountSuspendedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "ACCOUNT_SUSPENDED",
+                "message": "This account has been suspended",
+            },
         ) from exc
 
     return _auth_response(user, token)

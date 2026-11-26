@@ -9,6 +9,10 @@ class InvalidCredentialsError(Exception):
     """Raised when login credentials are invalid."""
 
 
+class AccountSuspendedError(Exception):
+    """Raised when a suspended account tries to log in."""
+
+
 class InvalidTokenError(Exception):
     """Raised when a JWT access token is missing, malformed, expired, or invalid."""
 

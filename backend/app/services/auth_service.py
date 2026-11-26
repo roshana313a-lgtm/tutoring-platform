@@ -1,6 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import EmailAlreadyExistsError, InvalidCredentialsError
+from app.core.errors import (
+    AccountSuspendedError,
+    EmailAlreadyExistsError,
+    InvalidCredentialsError,
+)
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -31,6 +35,8 @@ class AuthService:
 
         if user is None or not verify_password(data.password, user.hashed_password):
             raise InvalidCredentialsError(GENERIC_LOGIN_MESSAGE)
+        if not user.is_active:
+            raise AccountSuspendedError(GENERIC_LOGIN_MESSAGE)
 
         return user, self._issue_token(user)
 

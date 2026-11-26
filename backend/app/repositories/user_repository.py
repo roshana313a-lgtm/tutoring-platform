@@ -33,6 +33,15 @@ class UserRepository:
         )
         return list(result.scalars().all())
 
+    async def list_by_roles(self, roles: list[str]) -> list[User]:
+        """All users holding one of `roles`, newest first."""
+        result = await self.db.execute(
+            select(User)
+            .where(User.role.in_(roles))
+            .order_by(User.created_at.desc())
+        )
+        return list(result.scalars().all())
+
     async def delete(self, user: User) -> None:
         await self.db.delete(user)
         await self.db.commit()

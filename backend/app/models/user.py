@@ -35,6 +35,11 @@ class User(Base):
         Boolean, nullable=False, default=False, server_default="0"
     )
 
+    # Suspended accounts keep their data but cannot log in (403 ACCOUNT_SUSPENDED).
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="1"
+    )
+
     # Role-specific profile page fields (Feature 2c). Portable types per ADR-005.
     date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
     education_level: Mapped[str] = mapped_column(String(64), nullable=False, default="")
