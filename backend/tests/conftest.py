@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator, Awaitable, Callable
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -35,6 +36,12 @@ async def setup_database() -> AsyncIterator[None]:
     app.dependency_overrides.clear()
     async with test_engine.begin() as connection:
         await connection.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture
+def session_factory() -> async_sessionmaker[AsyncSession]:
+    """Session factory bound to the throwaway in-memory test database."""
+    return TestSessionLocal
 
 
 @pytest_asyncio.fixture
