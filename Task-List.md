@@ -1,7 +1,8 @@
 | # | Feature | SPEC | PLAN | ADR | Status |
-| 1 | User authentication & role-based access | features/auth/SPEC.md | features/auth/PLAN.md | docs/adr/ADR-002-auth-strategy.md | in-progress |
-| 2 | Instructor profile | — | — | — | pending |
-| 2a | User profile completion (onboarding) | features/profile-completion/SPEC.md | features/profile-completion/PLAN.md | — | in-progress |
+| 1 | User authentication & role-based access | features/auth/SPEC.md | features/auth/PLAN.md | docs/adr/ADR-002-auth-strategy.md | Done |
+| 2 | Instructor profile | — | — | — | Done |
+| 2a | User profile completion (onboarding) | features/profile-completion/SPEC.md | features/profile-completion/PLAN.md | — | Done |
+| 2b | Dashboard layout (role-based) | — | features/dashboard/PLAN.md | — | Done |
 | 3 | Instructor discovery & comparison | — | — | — | pending |
 | 4 | Class booking & scheduling | — | — | — | pending |
 | 5 | Online class sessions | — | — | — | pending |
