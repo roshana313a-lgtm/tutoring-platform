@@ -155,6 +155,36 @@ describe('ProfilePage avatar upload', () => {
     )
   })
 
+  it('updates the auth store so the avatar renders immediately', async () => {
+    const { wrapper, auth } = await mountPage(makeUser())
+    const input = wrapper.get('[data-test="avatar-upload"]')
+    Object.defineProperty(input.element, 'files', { value: [imageFile()], configurable: true })
+
+    expect(auth.user?.avatar_url).toBe('')
+    expect(wrapper.find('[data-test="avatar-preview"]').exists()).toBe(false)
+
+    await input.trigger('change')
+    await settle()
+
+    expect(auth.user?.avatar_url).toBe('/media/avatars/new-avatar.png')
+    const preview = wrapper.get('[data-test="avatar-preview"]')
+    expect(preview.attributes('src')).toBe('/media/avatars/new-avatar.png')
+  })
+
+  it('keeps unsaved form edits when the avatar updates the store', async () => {
+    const { wrapper } = await mountPage(makeUser())
+    await wrapper.get('[data-test="learning-goal"]').setValue('آماده‌سازی آیلتس')
+
+    const input = wrapper.get('[data-test="avatar-upload"]')
+    Object.defineProperty(input.element, 'files', { value: [imageFile()], configurable: true })
+    await input.trigger('change')
+    await settle()
+
+    expect((wrapper.get('[data-test="learning-goal"]').element as HTMLInputElement).value).toBe(
+      'آماده‌سازی آیلتس',
+    )
+  })
+
   it('reports an upload failure without submitting', async () => {
     const { wrapper, uploadRequest, updateProfile } = await mountPage(makeUser())
     uploadRequest.mockRejectedValue(new Error('boom'))

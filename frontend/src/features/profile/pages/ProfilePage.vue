@@ -7,6 +7,7 @@ import { z } from 'zod'
 import BaseBanner from '../../auth/components/BaseBanner.vue'
 import { useAuthStore } from '../../auth/stores/useAuthStore'
 import type { ProfileUpdatePayload } from '../../auth/api/auth'
+import { resolveMediaUrl } from '../../../shared/api/media'
 import { uploadAvatar } from '../api/avatar'
 
 const auth = useAuthStore()
@@ -83,7 +84,7 @@ const { value: teachingLanguages } = useField<string[]>('teaching_languages')
 const { value: shortSummary, errorMessage: summaryError } = useField<string>('short_summary')
 
 const avatarUrl = ref(auth.user?.avatar_url ?? '')
-const avatarPreview = ref(auth.user?.avatar_url ?? '')
+const avatarPreview = ref(resolveMediaUrl(auth.user?.avatar_url))
 const avatarUploading = ref(false)
 const avatarError = ref('')
 let previewObjectUrl: string | null = null
@@ -94,13 +95,20 @@ const formError = ref('')
 const successMessage = ref('')
 const submitting = ref(false)
 
+function releasePreviewObjectUrl(): void {
+  if (previewObjectUrl) {
+    URL.revokeObjectURL(previewObjectUrl)
+    previewObjectUrl = null
+  }
+}
+
 function buildPreview(file: File): string {
   if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
-    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl)
+    releasePreviewObjectUrl()
     previewObjectUrl = URL.createObjectURL(file)
     return previewObjectUrl
   }
-  return avatarUrl.value
+  return avatarPreview.value
 }
 
 async function onAvatarSelected(event: Event): Promise<void> {
@@ -113,11 +121,17 @@ async function onAvatarSelected(event: Event): Promise<void> {
   avatarUploading.value = true
 
   try {
-    avatarUrl.value = await uploadAvatar(file)
-    avatarPreview.value = avatarUrl.value
+    const uploadedUrl = await uploadAvatar(file)
+    avatarUrl.value = uploadedUrl
+    releasePreviewObjectUrl()
+    avatarPreview.value = resolveMediaUrl(uploadedUrl)
+    // Keep the store in sync so the top bar and any other avatar surface update
+    // without waiting for the form to be submitted.
+    auth.setAvatar(uploadedUrl)
   } catch {
     avatarError.value = 'آپلود تصویر ناموفق بود. دوباره تلاش کنید.'
-    avatarPreview.value = avatarUrl.value
+    releasePreviewObjectUrl()
+    avatarPreview.value = resolveMediaUrl(avatarUrl.value)
   } finally {
     avatarUploading.value = false
   }
@@ -125,11 +139,12 @@ async function onAvatarSelected(event: Event): Promise<void> {
 
 watch(
   () => auth.user,
-  (user) => {
+  (user, previous) => {
     if (!user) return
-    resetForm({ values: initialValues() })
+    // An avatar-only store update must not wipe unsaved form edits.
+    if (previous?.id !== user.id) resetForm({ values: initialValues() })
     avatarUrl.value = user.avatar_url ?? ''
-    avatarPreview.value = user.avatar_url ?? ''
+    avatarPreview.value = resolveMediaUrl(user.avatar_url)
   },
 )
 

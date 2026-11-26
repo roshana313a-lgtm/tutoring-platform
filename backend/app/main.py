@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -12,6 +13,14 @@ from app.core.config import settings
 from app.core.errors import error_response
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(uploads_router, prefix="/api/v1")
 

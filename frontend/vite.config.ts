@@ -6,6 +6,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      // Uploaded avatars are served by the API as /media/... paths; without this
+      // proxy the browser would ask the Vite server for them and get a 404.
+      '/media': { target: 'http://127.0.0.1:8000', changeOrigin: true },
     },
   },
   test: {

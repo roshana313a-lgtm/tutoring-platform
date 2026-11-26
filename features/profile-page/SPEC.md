@@ -54,10 +54,24 @@ students, and teaching-catalogue details for instructors.
 - `422 VALIDATION_ERROR` for non-image content types, empty files, or files over 2 MB.
 - `401 INVALID_TOKEN` without a valid token.
 
+## Media URLs and browser origins
+
+`avatar_url` is stored and returned as a backend-relative path (`/media/avatars/<file>`), so the
+same value works behind any host.
+
+- The Vite dev server proxies both `/api` and `/media` to `http://127.0.0.1:8000`; without the
+  `/media` proxy the browser requests the file from the frontend origin and the SPA fallback
+  returns HTML instead of an image.
+- `resolveMediaUrl()` in `frontend/src/shared/api/media.ts` prefixes `VITE_API_BASE_URL` when the
+  frontend is configured to call a different origin, and leaves absolute/`data:`/`blob:` URLs alone.
+- CORS is allow-listed through `CORS_ORIGINS` (default: the Vite dev origins on ports 5173 and
+  5174); credentials are not allowed.
+
 ## Acceptance criteria
 
 1. `/profile` renders for student, instructor, and admin, and only shows the fields that role owns.
-2. Selecting an image previews it locally, uploads it, and stores the returned URL on save.
+2. Selecting an image previews it locally, uploads it, writes the returned URL to the auth store so
+   the page and top bar re-render immediately, and persists it on save.
 3. Saving sends only the fields the role owns; the API rejects anything else with 422.
 4. `alembic upgrade head` adds the new columns on an existing database and `downgrade` removes them.
 5. Backend role-validation and frontend conditional-rendering tests pass.
