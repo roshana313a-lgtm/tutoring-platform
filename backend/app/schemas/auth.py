@@ -48,6 +48,7 @@ class UserResponse(BaseModel):
     hourly_rate: int = 0
     teaching_languages: list[str] = Field(default_factory=list)
     learning_goal: str = ""
+    is_approved: bool = False
 
 
 class LoginRequest(BaseModel):

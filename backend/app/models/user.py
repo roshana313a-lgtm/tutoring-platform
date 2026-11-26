@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Date, DateTime, Integer, String, Text, Uuid, func
+from sqlalchemy import JSON, Boolean, Date, DateTime, Integer, String, Text, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -28,6 +28,12 @@ class User(Base):
     bio: Mapped[str] = mapped_column(Text, nullable=False, default="")
     years_of_experience: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     current_level: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+
+    # Instructors stay unapproved (and hidden from discovery) until an admin
+    # approves them; other roles never read this flag.
+    is_approved: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
 
     # Role-specific profile page fields (Feature 2c). Portable types per ADR-005.
     date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
