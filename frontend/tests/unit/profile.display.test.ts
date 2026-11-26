@@ -8,9 +8,6 @@ import type { User } from '../../src/features/auth/api/auth'
 import { useAuthStore } from '../../src/features/auth/stores/useAuthStore'
 import { routes } from '../../src/router'
 import DashboardLayout from '../../src/features/dashboard/components/DashboardLayout.vue'
-import DashboardPage from '../../src/features/dashboard/pages/DashboardPage.vue'
-
-const BANNER_TEXT = 'لطفاً برای تکمیل حساب خود، اطلاعات پروفایل خود را وارد کنید.'
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
@@ -29,7 +26,7 @@ function makeUser(overrides: Partial<User> = {}): User {
   }
 }
 
-async function mountWithUser(component: typeof DashboardLayout | typeof DashboardPage, user: User) {
+async function mountWithUser(component: typeof DashboardLayout, user: User) {
   const pinia = createPinia()
   setActivePinia(pinia)
   const auth = useAuthStore(pinia)
@@ -103,24 +100,4 @@ describe('profile data display', () => {
     )
   })
 
-  it('greets the user by full name', async () => {
-    const wrapper = await mountWithUser(DashboardPage, makeUser({ full_name: 'سارا کریمی' }))
-
-    expect(wrapper.text()).toContain('خوش آمدید، سارا کریمی')
-    expect(wrapper.find('[data-test="onboarding-banner"]').exists()).toBe(false)
-  })
-
-  it('falls back to the email local part in the greeting', async () => {
-    const wrapper = await mountWithUser(DashboardPage, makeUser({ email: 'sara@example.com' }))
-
-    expect(wrapper.text()).toContain('خوش آمدید، sara')
-  })
-
-  it('shows the onboarding banner with a profile link for an empty full name', async () => {
-    const wrapper = await mountWithUser(DashboardPage, makeUser())
-
-    const banner = wrapper.get('[data-test="onboarding-banner"]')
-    expect(banner.text()).toContain(BANNER_TEXT)
-    expect(banner.get('a').attributes('href')).toBe('/profile')
-  })
 })

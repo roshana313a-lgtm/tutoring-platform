@@ -86,6 +86,22 @@ describe('DashboardLayout role-based sidebar', () => {
     ])
   })
 
+  it('points the dashboard link at the role-specific route', async () => {
+    const student = await mountLayoutWithRole('student')
+    const instructor = await mountLayoutWithRole('instructor')
+    const admin = await mountLayoutWithRole('admin')
+
+    expect(student.findAll('[data-test="sidebar-link"]')[0]?.attributes('href')).toBe(
+      '/dashboard/student',
+    )
+    expect(instructor.findAll('[data-test="sidebar-link"]')[0]?.attributes('href')).toBe(
+      '/dashboard/instructor',
+    )
+    expect(admin.findAll('[data-test="sidebar-link"]')[0]?.attributes('href')).toBe(
+      '/dashboard/admin',
+    )
+  })
+
   it('marks the current route link as active', async () => {
     const wrapper = await mountLayoutWithRole('student')
     const activeLinks = wrapper.findAll('[data-test="sidebar-link"].is-active')
