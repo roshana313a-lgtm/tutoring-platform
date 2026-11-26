@@ -49,6 +49,7 @@ class UserResponse(BaseModel):
     teaching_languages: list[str] = Field(default_factory=list)
     learning_goal: str = ""
     is_approved: bool = False
+    is_active: bool = True
 
 
 class LoginRequest(BaseModel):

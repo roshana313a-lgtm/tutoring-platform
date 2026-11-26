@@ -11,6 +11,7 @@ export interface User {
   phone_number?: string
   avatar_url?: string
   is_approved?: boolean
+  is_active?: boolean
   timezone?: string
   bio?: string
   years_of_experience?: number

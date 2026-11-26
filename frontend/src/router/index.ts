@@ -11,6 +11,8 @@ const AdminDashboard = () => import('../features/dashboard/pages/AdminDashboard.
 const PlaceholderPage = () => import('../features/dashboard/pages/PlaceholderPage.vue')
 const InstructorApprovalPage = () =>
   import('../features/admin/pages/InstructorApprovalPage.vue')
+const UserManagementPage = () => import('../features/admin/pages/UserManagementPage.vue')
+const AdminSettingsPage = () => import('../features/admin/pages/AdminSettingsPage.vue')
 const ProfilePage = () => import('../features/profile/pages/ProfilePage.vue')
 
 export const routes: RouteRecordRaw[] = [
@@ -59,6 +61,18 @@ export const routes: RouteRecordRaw[] = [
         name: 'dashboard-admin-instructors',
         component: InstructorApprovalPage,
         meta: { title: 'تایید مدرسان' },
+      },
+      {
+        path: 'admin/users',
+        name: 'dashboard-admin-users',
+        component: UserManagementPage,
+        meta: { title: 'مدیریت کاربران' },
+      },
+      {
+        path: 'admin/settings',
+        name: 'dashboard-admin-settings',
+        component: AdminSettingsPage,
+        meta: { title: 'تنظیمات' },
       },
       {
         // Legacy path kept as a redirect so older links keep working.
