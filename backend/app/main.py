@@ -1,13 +1,24 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.auth import router as auth_router
+from app.api.v1.uploads import router as uploads_router
+from app.core.config import settings
 from app.core.errors import error_response
 
 app = FastAPI()
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(uploads_router, prefix="/api/v1")
+
+# Uploaded avatars are served from the configured media directory.
+_media_root = Path(settings.media_dir)
+_media_root.mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=_media_root), name="media")
 
 _STATUS_CODES: dict[int, str] = {
     401: "UNAUTHORIZED",

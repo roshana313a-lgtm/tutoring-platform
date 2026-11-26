@@ -14,6 +14,12 @@ export interface User {
   bio?: string
   years_of_experience?: number
   current_level?: string
+  date_of_birth?: string | null
+  education_level?: string
+  short_summary?: string
+  hourly_rate?: number
+  teaching_languages?: string[]
+  learning_goal?: string
 }
 
 export interface ProfileUpdatePayload {
@@ -24,6 +30,12 @@ export interface ProfileUpdatePayload {
   bio?: string
   years_of_experience?: number
   current_level?: string
+  date_of_birth?: string | null
+  education_level?: string
+  short_summary?: string
+  hourly_rate?: number
+  teaching_languages?: string[]
+  learning_goal?: string
 }
 
 export interface RegisterPayload {

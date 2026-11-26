@@ -3,6 +3,7 @@
 | 2 | Instructor profile | — | — | — | Done |
 | 2a | User profile completion (onboarding) | features/profile-completion/SPEC.md | features/profile-completion/PLAN.md | — | Done |
 | 2b | Dashboard layout (role-based) | — | features/dashboard/PLAN.md | — | Done |
+| 2c | Role-specific profile page | features/profile-page/SPEC.md | features/profile-page/PLAN.md | — | Done |
 | 3 | Instructor discovery & comparison | — | — | — | pending |
 | 4 | Class booking & scheduling | — | — | — | pending |
 | 5 | Online class sessions | — | — | — | pending |

@@ -4,7 +4,7 @@ import DashboardLayout from '../features/dashboard/components/DashboardLayout.vu
 import { authGuard } from './guards'
 
 const DashboardPage = () => import('../features/dashboard/pages/DashboardPage.vue')
-const ProfileSettingsPage = () => import('../features/profile/pages/ProfileSettingsPage.vue')
+const ProfilePage = () => import('../features/profile/pages/ProfilePage.vue')
 
 export const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/login' },
@@ -30,10 +30,10 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: 'داشبورد' },
       },
       {
+        // Legacy path kept as a redirect so older links keep working.
         path: 'profile',
         name: 'dashboard-profile',
-        component: ProfileSettingsPage,
-        meta: { title: 'پروفایل من' },
+        redirect: { name: 'profile' },
       },
       {
         path: 'instructor-search',
@@ -100,6 +100,19 @@ export const routes: RouteRecordRaw[] = [
         name: 'dashboard-settings',
         component: DashboardPage,
         meta: { title: 'تنظیمات' },
+      },
+    ],
+  },
+  {
+    path: '/profile',
+    component: DashboardLayout,
+    beforeEnter: authGuard,
+    children: [
+      {
+        path: '',
+        name: 'profile',
+        component: ProfilePage,
+        meta: { title: 'پروفایل من' },
       },
     ],
   },

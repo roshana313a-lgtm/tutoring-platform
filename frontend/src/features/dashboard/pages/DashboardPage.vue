@@ -190,7 +190,7 @@ const displayName = computed(() => {
 
     <div v-if="!hasFullName" class="onboarding-banner" data-test="onboarding-banner">
       <span>لطفاً برای تکمیل حساب خود، اطلاعات پروفایل خود را وارد کنید.</span>
-      <RouterLink to="/dashboard/profile" class="onboarding-link">
+      <RouterLink to="/profile" class="onboarding-link">
         تکمیل پروفایل
       </RouterLink>
     </div>

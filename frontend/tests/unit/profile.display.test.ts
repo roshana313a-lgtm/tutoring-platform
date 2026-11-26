@@ -89,6 +89,6 @@ describe('profile data display', () => {
 
     const banner = wrapper.get('[data-test="onboarding-banner"]')
     expect(banner.text()).toContain(BANNER_TEXT)
-    expect(banner.get('a').attributes('href')).toBe('/dashboard/profile')
+    expect(banner.get('a').attributes('href')).toBe('/profile')
   })
 })
