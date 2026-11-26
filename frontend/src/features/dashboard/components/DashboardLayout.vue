@@ -21,6 +21,7 @@ import {
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
 import { resolveMediaUrl } from '../../../shared/api/media'
+import { dashboardRouteName } from '../roleDashboard'
 
 interface MenuItem {
   label: string
@@ -35,7 +36,6 @@ const router = useRouter()
 const notificationCount = 3
 
 const studentMenu: MenuItem[] = [
-  { label: 'داشبورد', to: { name: 'dashboard' }, icon: LayoutDashboard },
   { label: 'جستجوی مدرس', to: { name: 'dashboard-instructor-search' }, icon: Search },
   { label: 'کلاس‌های من', to: { name: 'dashboard-classes' }, icon: CalendarDays },
   { label: 'تکالیف من', to: { name: 'dashboard-homework' }, icon: BookOpen },
@@ -44,7 +44,6 @@ const studentMenu: MenuItem[] = [
 ]
 
 const instructorMenu: MenuItem[] = [
-  { label: 'داشبورد', to: { name: 'dashboard' }, icon: LayoutDashboard },
   { label: 'کلاس‌های من', to: { name: 'dashboard-classes' }, icon: CalendarDays },
   { label: 'دانشجویان من', to: { name: 'dashboard-students' }, icon: Users },
   { label: 'ارسال تکلیف', to: { name: 'dashboard-homework-new' }, icon: ClipboardList },
@@ -53,7 +52,6 @@ const instructorMenu: MenuItem[] = [
 ]
 
 const adminMenu: MenuItem[] = [
-  { label: 'داشبورد', to: { name: 'dashboard' }, icon: LayoutDashboard },
   { label: 'مدیریت مدرسان', to: { name: 'dashboard-manage-instructors' }, icon: GraduationCap },
   { label: 'مدیریت کاربران', to: { name: 'dashboard-users' }, icon: Users },
   { label: 'کیفیت خدمات', to: { name: 'dashboard-quality' }, icon: ChartNoAxesColumn },
@@ -61,14 +59,20 @@ const adminMenu: MenuItem[] = [
   { label: 'پروفایل من', to: { name: 'profile' }, icon: UserRound },
 ]
 
+const dashboardItem = computed<MenuItem>(() => ({
+  label: 'داشبورد',
+  to: { name: dashboardRouteName(auth.user?.role) },
+  icon: LayoutDashboard,
+}))
+
 const menuItems = computed<MenuItem[]>(() => {
   switch (auth.user?.role) {
     case 'student':
-      return studentMenu
+      return [dashboardItem.value, ...studentMenu]
     case 'instructor':
-      return instructorMenu
+      return [dashboardItem.value, ...instructorMenu]
     case 'admin':
-      return adminMenu
+      return [dashboardItem.value, ...adminMenu]
     default:
       return []
   }

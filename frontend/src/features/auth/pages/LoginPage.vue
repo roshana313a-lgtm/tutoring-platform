@@ -11,6 +11,7 @@ import BaseInput from '../components/BaseInput.vue'
 import { ApiError } from '../../../shared/api/http'
 import { useAuthStore } from '../stores/useAuthStore'
 import { authErrorMessage } from '../utils/authErrorMessage'
+import { dashboardLocation } from '../../dashboard/roleDashboard'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -39,7 +40,7 @@ const onSubmit = handleSubmit(async (values) => {
     await auth.login(values)
     successMessage.value = 'ورود موفق. در حال انتقال...'
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    await router.push('/dashboard')
+    await router.push(dashboardLocation(auth.user?.role))
   } catch (error) {
     formError.value = authErrorMessage(error)
     if (error instanceof ApiError && error.status === 422) {
