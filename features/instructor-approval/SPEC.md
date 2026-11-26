@@ -21,6 +21,9 @@ the screens on both sides.
   instructor's own session can see it.
 - Admin dashboard: the «مدرسان در انتظار تایید» card links to `/dashboard/admin/instructors`, a
   page listing pending instructors (name, email) with approve and reject actions.
+- Review details: each row has «مشاهده جزئیات», which opens a modal with the avatar, full name,
+  email, «خلاصه رزومه», «زبان‌های تدریس» as chips, «قیمت هر ساعت» and «سطح تحصیلات», plus the
+  «تایید» and «رد» actions so a decision can be made without leaving the review.
 - Admin sidebar entry «تایید مدرسان».
 - Instructor dashboard: a yellow banner while `is_approved` is false, titled
   «حساب شما در انتظار تایید مدیر است» with the text
@@ -56,6 +59,9 @@ All three endpoints require a bearer token for a user with `role = 'admin'`.
 5. Only admins can call the endpoints; other roles get `403`.
 6. The admin card links to the approval page, which lists name + email and approves/rejects in place.
 7. The instructor dashboard shows the pending banner only while `is_approved` is false.
+8. The pending payload carries the review fields (`full_name`, `short_summary`, `teaching_languages`,
+   `hourly_rate`, `education_level`, `avatar_url`), and the details modal renders all of them,
+   falling back to «ثبت نشده» when a field is empty.
 
 ## Decisions
 

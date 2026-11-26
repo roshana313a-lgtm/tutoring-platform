@@ -82,6 +82,42 @@ async def test_admin_lists_only_unapproved_instructors(
 
 
 @pytest.mark.asyncio
+async def test_pending_instructors_include_the_full_review_profile(
+    client: AsyncClient,
+    user_factory: UserFactory,
+) -> None:
+    token, instructor_id = await register(client, "profile-review@example.com", "instructor")
+    profile = {
+        "short_summary": "مدرس آیلتس با هشت سال تجربه",
+        "teaching_languages": ["انگلیسی", "آلمانی"],
+        "hourly_rate": 250000,
+        "education_level": "کارشناسی ارشد",
+        "avatar_url": "/media/avatars/review.png",
+    }
+    updated = await client.put(
+        "/api/v1/auth/profile", json=profile, headers=auth_headers(token)
+    )
+    assert updated.status_code == 200
+    admin = await token_for(user_factory, "approval-admin-profile@example.com", "admin")
+
+    response = await client.get(
+        "/api/v1/admin/instructors/pending",
+        headers=auth_headers(admin),
+    )
+
+    assert response.status_code == 200
+    row = next(item for item in response.json() if item["id"] == instructor_id)
+    assert row["full_name"] == ""
+    assert row["email"] == "profile-review@example.com"
+    assert row["short_summary"] == profile["short_summary"]
+    assert row["teaching_languages"] == profile["teaching_languages"]
+    assert row["hourly_rate"] == profile["hourly_rate"]
+    assert row["education_level"] == profile["education_level"]
+    assert row["avatar_url"] == profile["avatar_url"]
+    assert "hashed_password" not in row
+
+
+@pytest.mark.asyncio
 async def test_admin_approves_an_instructor(
     client: AsyncClient,
     user_factory: UserFactory,

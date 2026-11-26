@@ -29,7 +29,12 @@ function makeUser(role: TestRole, overrides: Partial<User> = {}): User {
   }
 }
 
-function makeInstructor(id: string, name: string, email: string): User {
+function makeInstructor(
+  id: string,
+  name: string,
+  email: string,
+  overrides: Partial<User> = {},
+): User {
   return {
     id,
     email,
@@ -37,8 +42,22 @@ function makeInstructor(id: string, name: string, email: string): User {
     created_at: '2026-11-26T10:00:00Z',
     full_name: name,
     is_approved: false,
+    short_summary: '',
+    teaching_languages: [],
+    hourly_rate: 0,
+    education_level: '',
+    avatar_url: '',
+    ...overrides,
   }
 }
+
+const DETAILED_INSTRUCTOR = {
+  short_summary: 'مدرس آیلتس با هشت سال تجربه تدریس',
+  teaching_languages: ['انگلیسی', 'آلمانی'],
+  hourly_rate: 250000,
+  education_level: 'کارشناسی ارشد',
+  avatar_url: '/media/avatars/sara.png',
+} as const
 
 async function withRouter(pinia: ReturnType<typeof createPinia>) {
   const router = createRouter({ history: createMemoryHistory(), routes })
@@ -232,5 +251,118 @@ describe('InstructorApprovalPage', () => {
     expect(wrapper.get('[data-test="approval-action-error"]').text()).toContain(
       'تایید مدرس ناموفق بود',
     )
+  })
+})
+
+describe('InstructorApprovalPage details modal', () => {
+  async function mountWithPending() {
+    vi.spyOn(http, 'get').mockResolvedValue([
+      makeInstructor('id-1', 'سارا کریمی', 'sara@example.com', DETAILED_INSTRUCTOR),
+      makeInstructor('id-2', 'مهدی رضایی', 'mehdi@example.com'),
+    ])
+    const mounted = await mountWithUser(InstructorApprovalPage, 'admin')
+    await settle()
+    return mounted
+  }
+
+  it('does not render the modal until details are requested', async () => {
+    const { wrapper } = await mountWithPending()
+
+    expect(wrapper.find('[data-test="instructor-modal"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-test="details-button"]')).toHaveLength(2)
+  })
+
+  it('opens the modal with the full profile of the selected instructor', async () => {
+    const { wrapper } = await mountWithPending()
+
+    await wrapper.get('[data-test="details-button"]').trigger('click')
+    await flushPromises()
+
+    const modal = wrapper.get('[data-test="instructor-modal"]')
+    expect(modal.get('[data-test="modal-name"]').text()).toBe('سارا کریمی')
+    expect(modal.get('[data-test="modal-email"]').text()).toBe('sara@example.com')
+    expect(modal.get('[data-test="modal-summary"]').text()).toBe(DETAILED_INSTRUCTOR.short_summary)
+    expect(modal.get('[data-test="modal-rate"]').text()).toContain('تومان')
+    expect(modal.get('[data-test="modal-rate"]').text()).toContain('۲۵۰')
+    expect(modal.get('[data-test="modal-education"]').text()).toBe('کارشناسی ارشد')
+    expect(modal.get('[data-test="modal-avatar"] img').attributes('src')).toBe(
+      '/media/avatars/sara.png',
+    )
+
+    const languages = modal.findAll('[data-test="modal-language"]').map((chip) => chip.text())
+    expect(languages).toEqual(['انگلیسی', 'آلمانی'])
+    expect(modal.find('[data-test="modal-approve"]').exists()).toBe(true)
+    expect(modal.find('[data-test="modal-reject"]').exists()).toBe(true)
+  })
+
+  it('opens the modal for the row that was clicked', async () => {
+    const { wrapper } = await mountWithPending()
+
+    await wrapper.findAll('[data-test="details-button"]')[1]?.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="modal-name"]').text()).toBe('مهدی رضایی')
+    expect(wrapper.get('[data-test="modal-email"]').text()).toBe('mehdi@example.com')
+  })
+
+  it('falls back to placeholders when the profile is empty', async () => {
+    const { wrapper } = await mountWithPending()
+
+    await wrapper.findAll('[data-test="details-button"]')[1]?.trigger('click')
+    await flushPromises()
+
+    const modal = wrapper.get('[data-test="instructor-modal"]')
+    expect(modal.get('[data-test="modal-summary"]').text()).toBe('ثبت نشده')
+    expect(modal.get('[data-test="modal-rate"]').text()).toBe('ثبت نشده')
+    expect(modal.get('[data-test="modal-education"]').text()).toBe('ثبت نشده')
+    expect(modal.findAll('[data-test="modal-language"]')).toHaveLength(0)
+    expect(modal.get('[data-test="modal-languages"]').text()).toContain('ثبت نشده')
+    expect(modal.get('[data-test="modal-avatar"]').find('img').exists()).toBe(false)
+  })
+
+  it('approves from inside the modal and closes it', async () => {
+    const { wrapper } = await mountWithPending()
+    const patch = vi.spyOn(http, 'patch').mockResolvedValue({ ...makeInstructor('id-1', 'سارا کریمی', 'sara@example.com'), is_approved: true })
+
+    await wrapper.get('[data-test="details-button"]').trigger('click')
+    await flushPromises()
+    await wrapper.get('[data-test="modal-approve"]').trigger('click')
+    await settle()
+
+    expect(patch).toHaveBeenCalledWith('/api/v1/admin/instructors/id-1/approve')
+    expect(wrapper.find('[data-test="instructor-modal"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-test="approval-row"]')).toHaveLength(1)
+    expect(wrapper.get('[data-test="approval-success"]').text()).toContain('تایید شد')
+  })
+
+  it('rejects from inside the modal and closes it', async () => {
+    const { wrapper } = await mountWithPending()
+    const patch = vi.spyOn(http, 'patch').mockResolvedValue(undefined)
+
+    await wrapper.findAll('[data-test="details-button"]')[1]?.trigger('click')
+    await flushPromises()
+    await wrapper.get('[data-test="modal-reject"]').trigger('click')
+    await settle()
+
+    expect(patch).toHaveBeenCalledWith('/api/v1/admin/instructors/id-2/reject')
+    expect(wrapper.find('[data-test="instructor-modal"]').exists()).toBe(false)
+    const rows = wrapper.findAll('[data-test="approval-row"]')
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.text()).toContain('sara@example.com')
+    expect(wrapper.get('[data-test="approval-success"]').text()).toContain('رد شد')
+  })
+
+  it('closes the modal without acting when the close button is used', async () => {
+    const { wrapper } = await mountWithPending()
+    const patch = vi.spyOn(http, 'patch')
+
+    await wrapper.get('[data-test="details-button"]').trigger('click')
+    await flushPromises()
+    await wrapper.get('[data-test="modal-close"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="instructor-modal"]').exists()).toBe(false)
+    expect(patch).not.toHaveBeenCalled()
+    expect(wrapper.findAll('[data-test="approval-row"]')).toHaveLength(2)
   })
 })
