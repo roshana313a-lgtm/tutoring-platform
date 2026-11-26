@@ -44,7 +44,7 @@ multi-tenant organizations, calendar sync with Google/Outlook.
 ### Backend
 - **Python 3.12+**
 - **FastAPI** (async), **Uvicorn**
-- **SQLAlchemy 2.0 (async)** + **Alembic** for migrations
+- **SQLAlchemy 2.0 (async)**; **Alembic** for database migrations (schema versioning)
 - **PostgreSQL 16**
 - **Redis 7** (cache + queue)
 - **ARQ** (or Celery) for background jobs (emails, notifications)
@@ -152,3 +152,27 @@ update, test-related task, or other development task.
     task before considering it complete.
 11. **No automatic merges or deletions.** Wait for explicit user approval before
     merging any branch into `main` (or `master`) or deleting any branch.
+
+---
+
+## 6. Database Migrations
+
+Database initialization and every schema change MUST go through Alembic. A database
+is never brought up to date by any other means.
+
+1. **Initialize the database with `alembic upgrade head`.** This is the only supported
+   way to create or update the schema, whether for a fresh local database, CI, or a
+   deployed environment.
+2. **Every schema change requires a revision.** Add a new revision under
+   `backend/alembic/versions/` and apply it with `alembic upgrade head`. Code that
+   depends on a schema change must not ship without its migration.
+3. **No manual DDL and no implicit schema creation.** Do not create, alter, or drop
+   tables, columns, indexes, or constraints by hand in PostgreSQL, and do not use
+   `Base.metadata.create_all()` (outside test fixtures that build a throwaway
+   database) as a substitute for a migration.
+4. **Migrations are reviewed together with the feature.** They belong in the same
+   branch as the code that depends on them and are part of the feature's completion
+   checks.
+5. **Migrations are reversible where practical.** Implement `downgrade()` alongside
+   `upgrade()`, and migrate from the repository root so the Alembic configuration is
+   resolved correctly.
