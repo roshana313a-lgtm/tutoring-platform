@@ -6,6 +6,7 @@ import { CalendarCheck, ChevronLeft, ClipboardCheck, ClipboardX, ShieldAlert, Us
 import { useAuthStore } from '../../auth/stores/useAuthStore'
 import { formatNumber } from '../../../i18n/format'
 import { fetchInstructorStats, type InstructorStats } from '../api/stats'
+import ProfileCompletionBanner from '../components/ProfileCompletionBanner.vue'
 
 const auth = useAuthStore()
 const { t, locale } = useI18n()
@@ -67,6 +68,8 @@ onMounted(load)
 
 <template>
   <section class="dashboard-page" data-test="instructor-dashboard">
+    <ProfileCompletionBanner />
+
     <div v-if="!isApproved" class="approval-banner" data-test="approval-banner">
       <ShieldAlert :size="20" :stroke-width="2" class="approval-icon" aria-hidden="true" />
       <div>

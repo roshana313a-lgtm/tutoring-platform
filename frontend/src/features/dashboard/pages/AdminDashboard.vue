@@ -35,6 +35,7 @@ import { useAuthStore } from '../../auth/stores/useAuthStore'
 import { resolveMediaUrl } from '../../../shared/api/media'
 import { formatDate, formatNumber, formatToday } from '../../../i18n/format'
 import { fetchAdminStats, type AdminStats } from '../api/stats'
+import ProfileCompletionBanner from '../components/ProfileCompletionBanner.vue'
 
 ChartJS.register(
   ArcElement,
@@ -419,6 +420,8 @@ onMounted(() => {
         <span class="hero-date">{{ todayLabel }}</span>
       </div>
     </header>
+
+    <ProfileCompletionBanner />
 
     <div v-if="showAlert" class="alert-center" data-test="action-center" role="status">
       <span class="alert-icon" aria-hidden="true">
