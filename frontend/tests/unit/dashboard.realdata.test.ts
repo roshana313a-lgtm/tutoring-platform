@@ -88,7 +88,7 @@ describe('admin dashboard real stats', () => {
     expect(statValues(wrapper)).toEqual([fa(5), fa(1), fa(0)])
 
     const pendingCard = wrapper.get('[data-test="admin-pending-instructors-link"]')
-    expect(pendingCard.attributes('href')).toBe('/dashboard/admin/instructors')
+    expect(pendingCard.attributes('href')).toBe('/dashboard/manage-instructors?status=pending')
     expect(pendingCard.get('[data-test="stat-value"]').text()).toBe(fa(1))
   })
 

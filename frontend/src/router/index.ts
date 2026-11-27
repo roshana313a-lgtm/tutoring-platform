@@ -9,8 +9,6 @@ const StudentDashboard = () => import('../features/dashboard/pages/StudentDashbo
 const InstructorDashboard = () => import('../features/dashboard/pages/InstructorDashboard.vue')
 const AdminDashboard = () => import('../features/dashboard/pages/AdminDashboard.vue')
 const PlaceholderPage = () => import('../features/dashboard/pages/PlaceholderPage.vue')
-const InstructorApprovalPage = () =>
-  import('../features/admin/pages/InstructorApprovalPage.vue')
 const UserManagementPage = () => import('../features/admin/pages/UserManagementPage.vue')
 const AdminSettingsPage = () => import('../features/admin/pages/AdminSettingsPage.vue')
 const ManageInstructorsPage = () => import('../features/admin/pages/ManageInstructorsPage.vue')
@@ -57,12 +55,6 @@ export const routes: RouteRecordRaw[] = [
         name: 'dashboard-admin',
         component: AdminDashboard,
         meta: { title: 'داشبورد مدیر' },
-      },
-      {
-        path: 'admin/instructors',
-        name: 'dashboard-admin-instructors',
-        component: InstructorApprovalPage,
-        meta: { title: 'تایید مدرسان' },
       },
       {
         path: 'admin/users',

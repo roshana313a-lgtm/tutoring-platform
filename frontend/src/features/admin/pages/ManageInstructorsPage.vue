@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   CheckCircle2,
   GraduationCap,
@@ -19,6 +20,18 @@ import { toggleUserSuspension } from '../api/users'
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'suspended'
 
+const STATUS_FILTERS: StatusFilter[] = ['all', 'pending', 'approved', 'suspended']
+
+const route = useRoute()
+
+// The admin dashboard links here with ?status=pending so the review queue opens directly.
+function filterFromQuery(): StatusFilter {
+  const status = route.query.status
+  return typeof status === 'string' && STATUS_FILTERS.includes(status as StatusFilter)
+    ? (status as StatusFilter)
+    : 'all'
+}
+
 const instructors = ref<User[]>([])
 const loading = ref(true)
 const loadError = ref('')
@@ -26,7 +39,7 @@ const actionError = ref('')
 const successMessage = ref('')
 const busyId = ref<string | null>(null)
 const confirmRejectId = ref<string | null>(null)
-const filter = ref<StatusFilter>('all')
+const filter = ref<StatusFilter>(filterFromQuery())
 
 const rateFormatter = new Intl.NumberFormat('fa-IR')
 
