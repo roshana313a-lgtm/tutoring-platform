@@ -80,6 +80,23 @@ describe('manage instructors page', () => {
     expect(wrapper.text()).toContain(fa(250000))
   })
 
+  it('opens directly on the pending tab when the status query is present', async () => {
+    vi.spyOn(http, 'get').mockResolvedValue([
+      instructor(),
+      instructor({ id: 'inst-2', email: 'approved@example.com', is_approved: true }),
+    ])
+
+    const wrapper = await mountPage(
+      ManageInstructorsPage,
+      '/dashboard/manage-instructors?status=pending',
+    )
+
+    expect(wrapper.get('[data-test="filter-pending"]').attributes('aria-selected')).toBe('true')
+    const rows = wrapper.findAll('[data-test="instructor-row"]')
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.text()).toContain('pending@example.com')
+  })
+
   it('filters the table by status', async () => {
     vi.spyOn(http, 'get').mockResolvedValue([
       instructor(),
@@ -198,7 +215,6 @@ describe('service quality page', () => {
 describe('admin menu routes', () => {
   const adminPaths: Array<[string, string]> = [
     ['/dashboard/manage-instructors', 'dashboard-manage-instructors'],
-    ['/dashboard/admin/instructors', 'dashboard-admin-instructors'],
     ['/dashboard/admin/users', 'dashboard-admin-users'],
     ['/dashboard/quality', 'dashboard-quality'],
     ['/dashboard/admin/settings', 'dashboard-admin-settings'],

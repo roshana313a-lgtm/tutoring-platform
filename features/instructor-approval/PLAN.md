@@ -12,9 +12,9 @@
 | Backend router | `backend/app/api/v1/admin.py` | Pending list, approve, reject (admin only) |
 | App wiring | `backend/app/main.py` | Mount the admin router |
 | Frontend API | `frontend/src/features/admin/api/instructors.ts`, `frontend/src/shared/api/http.ts` | Approval client, `http.patch` |
-| Frontend admin UI | `frontend/src/features/admin/pages/InstructorApprovalPage.vue`, `frontend/src/features/dashboard/pages/AdminDashboard.vue`, `frontend/src/features/dashboard/components/DashboardLayout.vue` | Approval table, card link, sidebar entry |
+| Frontend admin UI | `frontend/src/features/admin/pages/ManageInstructorsPage.vue`, `frontend/src/features/dashboard/pages/AdminDashboard.vue`, `frontend/src/features/dashboard/components/DashboardLayout.vue` | Review queue as the pending tab of the instructor directory, card link, sidebar entry |
 | Frontend instructor UI | `frontend/src/features/dashboard/pages/InstructorDashboard.vue` | Pending approval banner |
-| Routing | `frontend/src/router/index.ts` | `/dashboard/admin/instructors` |
+| Routing | `frontend/src/router/index.ts` | `/dashboard/manage-instructors?status=pending` |
 | Types | `frontend/src/features/auth/api/auth.ts` | `User.is_approved` |
 | Tests | `backend/tests/unit/test_admin_instructors.py`, `frontend/tests/unit/instructor.approval.test.ts` | Admin-only access, approve/reject, conditional rendering |
 

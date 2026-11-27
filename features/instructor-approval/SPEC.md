@@ -19,12 +19,14 @@ the screens on both sides.
   - `PATCH /api/v1/admin/instructors/{id}/reject` — removes the instructor account (`204`).
 - `is_approved` is part of every user payload (`UserResponse`), so both the admin list and the
   instructor's own session can see it.
-- Admin dashboard: the «مدرسان در انتظار تایید» card links to `/dashboard/admin/instructors`, a
-  page listing pending instructors (name, email) with approve and reject actions.
+- Admin dashboard: the «مدرسان در انتظار تایید» card links to
+  `/dashboard/manage-instructors?status=pending`, the pending tab of the instructor directory
+  (name, email) with approve and reject actions.
 - Review details: each row has «مشاهده جزئیات», which opens a modal with the avatar, full name,
   email, «خلاصه رزومه», «زبان‌های تدریس» as chips, «قیمت هر ساعت» and «سطح تحصیلات», plus the
   «تایید» and «رد» actions so a decision can be made without leaving the review.
-- Admin sidebar entry «تایید مدرسان».
+- The review queue is reached from the single admin sidebar entry «مدیریت مدرسان»; there is no
+  separate approval page or route.
 - Instructor dashboard: a yellow banner while `is_approved` is false, titled
   «حساب شما در انتظار تایید مدیر است» with the text
   «پروفایل شما هنوز توسط مدیر تایید نشده است. تا آن زمان در لیست جستجو نمایش داده نمی‌شوید.»

@@ -10,7 +10,6 @@ import { http } from '../../src/shared/api/http'
 import { routes } from '../../src/router'
 import AdminDashboard from '../../src/features/dashboard/pages/AdminDashboard.vue'
 import InstructorDashboard from '../../src/features/dashboard/pages/InstructorDashboard.vue'
-import InstructorApprovalPage from '../../src/features/admin/pages/InstructorApprovalPage.vue'
 import { clearStoredToken, setStoredToken } from '../../src/shared/api/http'
 
 type TestRole = 'student' | 'instructor' | 'admin'
@@ -29,37 +28,7 @@ function makeUser(role: TestRole, overrides: Partial<User> = {}): User {
   }
 }
 
-function makeInstructor(
-  id: string,
-  name: string,
-  email: string,
-  overrides: Partial<User> = {},
-): User {
-  return {
-    id,
-    email,
-    role: 'instructor',
-    created_at: '2026-11-26T10:00:00Z',
-    full_name: name,
-    is_approved: false,
-    short_summary: '',
-    teaching_languages: [],
-    hourly_rate: 0,
-    education_level: '',
-    avatar_url: '',
-    ...overrides,
-  }
-}
-
-const DETAILED_INSTRUCTOR = {
-  short_summary: 'مدرس آیلتس با هشت سال تجربه تدریس',
-  teaching_languages: ['انگلیسی', 'آلمانی'],
-  hourly_rate: 250000,
-  education_level: 'کارشناسی ارشد',
-  avatar_url: '/media/avatars/sara.png',
-} as const
-
-async function withRouter(pinia: ReturnType<typeof createPinia>) {
+async function withRouter() {
   const router = createRouter({ history: createMemoryHistory(), routes })
   await router.push('/dashboard/admin')
   await router.isReady()
@@ -67,7 +36,7 @@ async function withRouter(pinia: ReturnType<typeof createPinia>) {
 }
 
 async function mountWithUser(
-  component: typeof AdminDashboard | typeof InstructorDashboard | typeof InstructorApprovalPage,
+  component: typeof AdminDashboard | typeof InstructorDashboard,
   role: TestRole,
   overrides: Partial<User> = {},
 ) {
@@ -77,7 +46,7 @@ async function mountWithUser(
   const auth = useAuthStore(pinia)
   auth.user = makeUser(role, overrides)
 
-  const router = await withRouter(pinia)
+  const router = await withRouter()
   const wrapper = mount(component, {
     global: { plugins: [pinia, router], stubs: { teleport: true } },
   })
@@ -95,14 +64,6 @@ function mockDashboardStats() {
     }
     return Promise.reject(new Error(`unexpected url: ${url}`))
   })
-}
-
-async function settle(): Promise<void> {
-  for (let round = 0; round < 3; round += 1) {
-    await flushPromises()
-    await new Promise((resolve) => setTimeout(resolve, 5))
-  }
-  await flushPromises()
 }
 
 afterEach(() => {
@@ -146,16 +107,16 @@ describe('instructor approval status', () => {
 })
 
 describe('admin dashboard approval entry point', () => {
-  it('links the pending instructors card to the approval page', async () => {
+  it('links the pending instructors card to the pending tab of the instructors list', async () => {
     mockDashboardStats()
     const { wrapper } = await mountWithUser(AdminDashboard, 'admin')
 
     const card = wrapper.get('[data-test="admin-pending-instructors-link"]')
-    expect(card.attributes('href')).toBe('/dashboard/admin/instructors')
+    expect(card.attributes('href')).toBe('/dashboard/manage-instructors?status=pending')
     expect(card.text()).toContain('مدرسان در انتظار تایید')
   })
 
-  it('lists the approval link in the admin sidebar', async () => {
+  it('keeps a single instructors entry in the admin sidebar', async () => {
     setStoredToken('test-token')
     const pinia = createPinia()
     setActivePinia(pinia)
@@ -164,223 +125,14 @@ describe('admin dashboard approval entry point', () => {
 
     const DashboardLayout = (await import('../../src/features/dashboard/components/DashboardLayout.vue'))
       .default
-    const router = await withRouter(pinia)
+    const router = await withRouter()
     const wrapper = mount(DashboardLayout, {
       global: { plugins: [pinia, router], stubs: { RouterView: true } },
     })
     await flushPromises()
 
-    const labels = wrapper
-      .findAll('[data-test="sidebar-link"]')
-      .map((link) => link.text().trim())
-    expect(labels).toContain('تایید مدرسان')
-  })
-})
-
-describe('InstructorApprovalPage', () => {
-  it('lists pending instructors with their name and email', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue([
-      makeInstructor('id-1', 'سارا کریمی', 'sara@example.com'),
-      makeInstructor('id-2', 'مهدی رضایی', 'mehdi@example.com'),
-    ])
-    const { wrapper } = await mountWithUser(InstructorApprovalPage, 'admin')
-    await settle()
-
-    const rows = wrapper.findAll('[data-test="approval-row"]')
-    expect(rows).toHaveLength(2)
-    expect(rows[0]?.text()).toContain('سارا کریمی')
-    expect(rows[0]?.text()).toContain('sara@example.com')
-    expect(rows[1]?.text()).toContain('mehdi@example.com')
-    expect(wrapper.findAll('[data-test="approve-button"]')).toHaveLength(2)
-    expect(wrapper.findAll('[data-test="reject-button"]')).toHaveLength(2)
-  })
-
-  it('approves an instructor and removes the row', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue([
-      makeInstructor('id-1', 'سارا کریمی', 'sara@example.com'),
-      makeInstructor('id-2', 'مهدی رضایی', 'mehdi@example.com'),
-    ])
-    const patch = vi
-      .spyOn(http, 'patch')
-      .mockResolvedValue({ ...makeInstructor('id-1', 'سارا کریمی', 'sara@example.com'), is_approved: true })
-
-    const { wrapper } = await mountWithUser(InstructorApprovalPage, 'admin')
-    await settle()
-
-    await wrapper.get('[data-test="approve-button"]').trigger('click')
-    await settle()
-
-    expect(patch).toHaveBeenCalledWith('/api/v1/admin/instructors/id-1/approve')
-    const rows = wrapper.findAll('[data-test="approval-row"]')
-    expect(rows).toHaveLength(1)
-    expect(rows[0]?.text()).toContain('mehdi@example.com')
-    expect(wrapper.get('[data-test="approval-success"]').text()).toContain('تایید شد')
-  })
-
-  it('rejects an instructor and removes the row', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue([
-      makeInstructor('id-1', 'سارا کریمی', 'sara@example.com'),
-    ])
-    const patch = vi.spyOn(http, 'patch').mockResolvedValue(undefined)
-
-    const { wrapper } = await mountWithUser(InstructorApprovalPage, 'admin')
-    await settle()
-
-    await wrapper.get('[data-test="reject-button"]').trigger('click')
-    await settle()
-
-    expect(patch).toHaveBeenCalledWith('/api/v1/admin/instructors/id-1/reject')
-    expect(wrapper.findAll('[data-test="approval-row"]')).toHaveLength(0)
-    expect(wrapper.get('[data-test="approval-empty"]').exists()).toBe(true)
-  })
-
-  it('shows an empty state when nothing is pending', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue([])
-    const { wrapper } = await mountWithUser(InstructorApprovalPage, 'admin')
-    await settle()
-
-    expect(wrapper.find('[data-test="approval-empty"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-test="approval-row"]')).toHaveLength(0)
-  })
-
-  it('reports a failed load', async () => {
-    vi.spyOn(http, 'get').mockRejectedValue(new Error('boom'))
-    const { wrapper } = await mountWithUser(InstructorApprovalPage, 'admin')
-    await settle()
-
-    expect(wrapper.get('[data-test="approval-error"]').text()).toContain(
-      'دریافت فهرست مدرسان ناموفق بود',
-    )
-  })
-
-  it('keeps the row and reports an action failure', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue([
-      makeInstructor('id-1', 'سارا کریمی', 'sara@example.com'),
-    ])
-    vi.spyOn(http, 'patch').mockRejectedValue(new Error('boom'))
-
-    const { wrapper } = await mountWithUser(InstructorApprovalPage, 'admin')
-    await settle()
-
-    await wrapper.get('[data-test="approve-button"]').trigger('click')
-    await settle()
-
-    expect(wrapper.findAll('[data-test="approval-row"]')).toHaveLength(1)
-    expect(wrapper.get('[data-test="approval-action-error"]').text()).toContain(
-      'تایید مدرس ناموفق بود',
-    )
-  })
-})
-
-describe('InstructorApprovalPage details modal', () => {
-  async function mountWithPending() {
-    vi.spyOn(http, 'get').mockResolvedValue([
-      makeInstructor('id-1', 'سارا کریمی', 'sara@example.com', DETAILED_INSTRUCTOR),
-      makeInstructor('id-2', 'مهدی رضایی', 'mehdi@example.com'),
-    ])
-    const mounted = await mountWithUser(InstructorApprovalPage, 'admin')
-    await settle()
-    return mounted
-  }
-
-  it('does not render the modal until details are requested', async () => {
-    const { wrapper } = await mountWithPending()
-
-    expect(wrapper.find('[data-test="instructor-modal"]').exists()).toBe(false)
-    expect(wrapper.findAll('[data-test="details-button"]')).toHaveLength(2)
-  })
-
-  it('opens the modal with the full profile of the selected instructor', async () => {
-    const { wrapper } = await mountWithPending()
-
-    await wrapper.get('[data-test="details-button"]').trigger('click')
-    await flushPromises()
-
-    const modal = wrapper.get('[data-test="instructor-modal"]')
-    expect(modal.get('[data-test="modal-name"]').text()).toBe('سارا کریمی')
-    expect(modal.get('[data-test="modal-email"]').text()).toBe('sara@example.com')
-    expect(modal.get('[data-test="modal-summary"]').text()).toBe(DETAILED_INSTRUCTOR.short_summary)
-    expect(modal.get('[data-test="modal-rate"]').text()).toContain('تومان')
-    expect(modal.get('[data-test="modal-rate"]').text()).toContain('۲۵۰')
-    expect(modal.get('[data-test="modal-education"]').text()).toBe('کارشناسی ارشد')
-    expect(modal.get('[data-test="modal-avatar"] img').attributes('src')).toBe(
-      '/media/avatars/sara.png',
-    )
-
-    const languages = modal.findAll('[data-test="modal-language"]').map((chip) => chip.text())
-    expect(languages).toEqual(['انگلیسی', 'آلمانی'])
-    expect(modal.find('[data-test="modal-approve"]').exists()).toBe(true)
-    expect(modal.find('[data-test="modal-reject"]').exists()).toBe(true)
-  })
-
-  it('opens the modal for the row that was clicked', async () => {
-    const { wrapper } = await mountWithPending()
-
-    await wrapper.findAll('[data-test="details-button"]')[1]?.trigger('click')
-    await flushPromises()
-
-    expect(wrapper.get('[data-test="modal-name"]').text()).toBe('مهدی رضایی')
-    expect(wrapper.get('[data-test="modal-email"]').text()).toBe('mehdi@example.com')
-  })
-
-  it('falls back to placeholders when the profile is empty', async () => {
-    const { wrapper } = await mountWithPending()
-
-    await wrapper.findAll('[data-test="details-button"]')[1]?.trigger('click')
-    await flushPromises()
-
-    const modal = wrapper.get('[data-test="instructor-modal"]')
-    expect(modal.get('[data-test="modal-summary"]').text()).toBe('ثبت نشده')
-    expect(modal.get('[data-test="modal-rate"]').text()).toBe('ثبت نشده')
-    expect(modal.get('[data-test="modal-education"]').text()).toBe('ثبت نشده')
-    expect(modal.findAll('[data-test="modal-language"]')).toHaveLength(0)
-    expect(modal.get('[data-test="modal-languages"]').text()).toContain('ثبت نشده')
-    expect(modal.get('[data-test="modal-avatar"]').find('img').exists()).toBe(false)
-  })
-
-  it('approves from inside the modal and closes it', async () => {
-    const { wrapper } = await mountWithPending()
-    const patch = vi.spyOn(http, 'patch').mockResolvedValue({ ...makeInstructor('id-1', 'سارا کریمی', 'sara@example.com'), is_approved: true })
-
-    await wrapper.get('[data-test="details-button"]').trigger('click')
-    await flushPromises()
-    await wrapper.get('[data-test="modal-approve"]').trigger('click')
-    await settle()
-
-    expect(patch).toHaveBeenCalledWith('/api/v1/admin/instructors/id-1/approve')
-    expect(wrapper.find('[data-test="instructor-modal"]').exists()).toBe(false)
-    expect(wrapper.findAll('[data-test="approval-row"]')).toHaveLength(1)
-    expect(wrapper.get('[data-test="approval-success"]').text()).toContain('تایید شد')
-  })
-
-  it('rejects from inside the modal and closes it', async () => {
-    const { wrapper } = await mountWithPending()
-    const patch = vi.spyOn(http, 'patch').mockResolvedValue(undefined)
-
-    await wrapper.findAll('[data-test="details-button"]')[1]?.trigger('click')
-    await flushPromises()
-    await wrapper.get('[data-test="modal-reject"]').trigger('click')
-    await settle()
-
-    expect(patch).toHaveBeenCalledWith('/api/v1/admin/instructors/id-2/reject')
-    expect(wrapper.find('[data-test="instructor-modal"]').exists()).toBe(false)
-    const rows = wrapper.findAll('[data-test="approval-row"]')
-    expect(rows).toHaveLength(1)
-    expect(rows[0]?.text()).toContain('sara@example.com')
-    expect(wrapper.get('[data-test="approval-success"]').text()).toContain('رد شد')
-  })
-
-  it('closes the modal without acting when the close button is used', async () => {
-    const { wrapper } = await mountWithPending()
-    const patch = vi.spyOn(http, 'patch')
-
-    await wrapper.get('[data-test="details-button"]').trigger('click')
-    await flushPromises()
-    await wrapper.get('[data-test="modal-close"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="instructor-modal"]').exists()).toBe(false)
-    expect(patch).not.toHaveBeenCalled()
-    expect(wrapper.findAll('[data-test="approval-row"]')).toHaveLength(2)
+    const labels = wrapper.findAll('[data-test="sidebar-link"]').map((link) => link.text().trim())
+    expect(labels).toContain('مدیریت مدرسان')
+    expect(labels).not.toContain('تایید مدرسان')
   })
 })

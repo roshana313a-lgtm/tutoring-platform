@@ -42,7 +42,7 @@ const cards = computed<StatCard[]>(() => {
       title: 'مدرسان در انتظار تایید',
       value: value(stats.value?.pending_instructors),
       hint: 'درخواست بررسی نشده',
-      to: { name: 'dashboard-admin-instructors' },
+      to: { name: 'dashboard-manage-instructors', query: { status: 'pending' } },
     },
     {
       key: 'classes',
