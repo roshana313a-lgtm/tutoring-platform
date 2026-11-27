@@ -9,6 +9,7 @@ import { useAuthStore } from '../../src/features/auth/stores/useAuthStore'
 import { clearStoredToken, http, setStoredToken } from '../../src/shared/api/http'
 import { routes } from '../../src/router'
 import AdminSettingsPage from '../../src/features/admin/pages/AdminSettingsPage.vue'
+import type { PlatformSettings } from '../../src/features/admin/api/settings'
 
 const admin: User = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -122,6 +123,24 @@ describe('AdminSettingsPage tabs', () => {
     await wrapper.get('[data-test="maintenance-toggle"]').setValue(true)
 
     expect(wrapper.get('[data-test="maintenance-warning"]').text()).toContain('حالت تعمیر')
+  })
+
+  it('still renders the financial tab when the payload is missing the newer fields', async () => {
+    // Regression: a stale/partial API response used to make the currency label
+    // throw during render, so the financial tab never appeared.
+    vi.spyOn(http, 'get').mockResolvedValue({
+      platform_name: 'آکادمی قدیمی',
+      support_email: 'help@pars.example.com',
+      default_hourly_rate: 350000,
+    } as unknown as PlatformSettings)
+
+    const wrapper = await mountPage()
+    await wrapper.get('[data-test="settings-tab-financial"]').trigger('click')
+
+    expect(wrapper.find('[data-test="settings-panel-financial"]').exists()).toBe(true)
+    expect(inputValue(wrapper, 'default-rate')).toBe('350000')
+    expect(inputValue(wrapper, 'currency')).toBe('تومان')
+    expect(inputValue(wrapper, 'commission-rate')).toBe('10')
   })
 
   it('keeps the admin identity out of the page', async () => {

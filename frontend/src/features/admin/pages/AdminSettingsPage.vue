@@ -49,6 +49,32 @@ const form = reactive<PlatformSettings>({
   maintenance_mode: false,
 })
 
+function asText(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.trim() !== '' ? value : fallback
+}
+
+function asWholeNumber(value: unknown, fallback: number): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback
+}
+
+function asFlag(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback
+}
+
+/** Fill the form from an API payload, tolerating missing or renamed fields. */
+function applySettings(settings: Partial<PlatformSettings> | null | undefined): void {
+  form.institute_name = asText(settings?.institute_name, '')
+  form.support_email = asText(settings?.support_email, '')
+  form.default_class_duration = asWholeNumber(settings?.default_class_duration, 60)
+  form.min_cancellation_hours = asWholeNumber(settings?.min_cancellation_hours, 24)
+  form.default_hourly_rate = asWholeNumber(settings?.default_hourly_rate, 0)
+  form.currency = asText(settings?.currency, 'تومان')
+  form.commission_rate = asWholeNumber(settings?.commission_rate, 10)
+  form.enable_email_notifications = asFlag(settings?.enable_email_notifications, true)
+  form.maintenance_mode = asFlag(settings?.maintenance_mode, false)
+}
+
 const errors = reactive<Record<string, string>>({})
 const loading = ref(true)
 const saving = ref(false)
@@ -125,16 +151,7 @@ async function load(): Promise<void> {
   loadError.value = ''
 
   try {
-    const settings = await fetchSettings()
-    form.institute_name = settings.institute_name
-    form.support_email = settings.support_email
-    form.default_class_duration = settings.default_class_duration
-    form.min_cancellation_hours = settings.min_cancellation_hours
-    form.default_hourly_rate = settings.default_hourly_rate
-    form.currency = settings.currency
-    form.commission_rate = settings.commission_rate
-    form.enable_email_notifications = settings.enable_email_notifications
-    form.maintenance_mode = settings.maintenance_mode
+    applySettings(await fetchSettings())
   } catch {
     loadError.value = t('errors.settingsLoad')
   } finally {
@@ -163,15 +180,7 @@ async function submit(): Promise<void> {
       enable_email_notifications: form.enable_email_notifications,
       maintenance_mode: form.maintenance_mode,
     })
-    form.institute_name = saved.institute_name
-    form.support_email = saved.support_email
-    form.default_class_duration = saved.default_class_duration
-    form.min_cancellation_hours = saved.min_cancellation_hours
-    form.default_hourly_rate = saved.default_hourly_rate
-    form.currency = saved.currency
-    form.commission_rate = saved.commission_rate
-    form.enable_email_notifications = saved.enable_email_notifications
-    form.maintenance_mode = saved.maintenance_mode
+    applySettings(saved)
     notify('success', t('admin.settings.saved'))
   } catch {
     notify('error', t('errors.settingsSave'))
