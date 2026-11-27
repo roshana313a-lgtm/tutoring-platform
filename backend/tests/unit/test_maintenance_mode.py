@@ -10,7 +10,7 @@ from app.models.user import User
 
 UserFactory = Callable[[str, str], Awaitable[User]]
 
-MAINTENANCE_MESSAGE = "سیستم موقتاً در حال به‌روزرسانی است. لطفاً بعداً مراجعه کنید."
+MAINTENANCE_MESSAGE = "سامانه موقتاً در حال به‌روزرسانی است. لطفاً بعداً مراجعه کنید."
 ADMIN_PASSWORD = "correct horse battery staple"
 
 
@@ -59,6 +59,12 @@ async def test_maintenance_mode_returns_503_for_authenticated_non_admins(
     body = response.json()
     assert body["error"]["code"] == "MAINTENANCE_MODE"
     assert body["error"]["message"] == MAINTENANCE_MESSAGE
+
+
+@pytest.mark.asyncio
+async def test_maintenance_message_matches_the_institute_wording() -> None:
+    assert "سامانه" in MAINTENANCE_MESSAGE
+    assert "به‌روزرسانی" in MAINTENANCE_MESSAGE
 
 
 @pytest.mark.asyncio

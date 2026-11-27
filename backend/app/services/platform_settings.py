@@ -1,12 +1,13 @@
 from app.schemas.admin import PlatformSettingsResponse
 
 DEFAULT_SETTINGS: dict[str, str] = {
-    "platform_name": "مؤسسه آموزش آنلاین",
+    "institute_name": "مؤسسه آموزش آنلاین",
     "support_email": "support@institute.com",
-    "platform_description": "",
+    "default_class_duration": "60",
+    "min_cancellation_hours": "24",
     "default_hourly_rate": "250000",
     "currency": "تومان",
-    "min_withdrawal_amount": "0",
+    "commission_rate": "10",
     "enable_email_notifications": "true",
     "maintenance_mode": "false",
 }
@@ -43,12 +44,13 @@ def is_maintenance_mode(stored: dict[str, str]) -> bool:
 def build_settings(stored: dict[str, str]) -> PlatformSettingsResponse:
     """Merge stored values over the defaults, tolerating missing/garbled rows."""
     return PlatformSettingsResponse(
-        platform_name=stored.get("platform_name") or DEFAULT_SETTINGS["platform_name"],
+        institute_name=stored.get("institute_name") or DEFAULT_SETTINGS["institute_name"],
         support_email=stored.get("support_email") or DEFAULT_SETTINGS["support_email"],
-        platform_description=stored.get("platform_description") or "",
+        default_class_duration=_as_int(stored, "default_class_duration"),
+        min_cancellation_hours=_as_int(stored, "min_cancellation_hours"),
         default_hourly_rate=_as_int(stored, "default_hourly_rate"),
         currency=stored.get("currency") or DEFAULT_SETTINGS["currency"],
-        min_withdrawal_amount=_as_int(stored, "min_withdrawal_amount"),
+        commission_rate=_as_int(stored, "commission_rate"),
         enable_email_notifications=_as_bool(stored, "enable_email_notifications"),
         maintenance_mode=_as_bool(stored, "maintenance_mode"),
     )

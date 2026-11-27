@@ -4,12 +4,12 @@ import { useI18n } from 'vue-i18n'
 import {
   BellRing,
   CircleDollarSign,
+  GraduationCap,
   LoaderCircle,
   Save,
   Settings2,
   ShieldAlert,
   ShieldCheck,
-  SlidersHorizontal,
   X,
 } from 'lucide-vue-next'
 
@@ -18,27 +18,33 @@ import { fetchSettings, saveSettings, type PlatformSettings } from '../api/setti
 const { t } = useI18n()
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const DESCRIPTION_MAX = 1000
+const CLASS_DURATION_MIN = 1
+const CLASS_DURATION_MAX = 1440
+const CANCELLATION_HOURS_MIN = 0
+const CANCELLATION_HOURS_MAX = 720
+const COMMISSION_MIN = 0
+const COMMISSION_MAX = 100
 const TOAST_DURATION_MS = 5000
 
-type TabKey = 'general' | 'financial' | 'system'
+type TabKey = 'academic' | 'financial' | 'system'
 type ToastType = 'success' | 'error'
 
 const tabs: { key: TabKey; labelKey: string; icon: unknown }[] = [
-  { key: 'general', labelKey: 'admin.settings.tabs.general', icon: SlidersHorizontal },
+  { key: 'academic', labelKey: 'admin.settings.tabs.academic', icon: GraduationCap },
   { key: 'financial', labelKey: 'admin.settings.tabs.financial', icon: CircleDollarSign },
   { key: 'system', labelKey: 'admin.settings.tabs.system', icon: Settings2 },
 ]
 
-const activeTab = ref<TabKey>('general')
+const activeTab = ref<TabKey>('academic')
 
 const form = reactive<PlatformSettings>({
-  platform_name: '',
+  institute_name: '',
   support_email: '',
-  platform_description: '',
+  default_class_duration: 60,
+  min_cancellation_hours: 24,
   default_hourly_rate: 0,
   currency: 'تومان',
-  min_withdrawal_amount: 0,
+  commission_rate: 10,
   enable_email_notifications: true,
   maintenance_mode: false,
 })
@@ -50,7 +56,7 @@ const loadError = ref('')
 const toast = ref<{ type: ToastType; message: string } | null>(null)
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
-const currencyLabel = computed(() => form.currency.trim() || t('admin.settings.currencyFallback'))
+const currencyLabel = computed(() => form.currency.trim())
 
 function clearToast(): void {
   toast.value = null
@@ -66,18 +72,28 @@ function notify(type: ToastType, message: string): void {
   toastTimer = setTimeout(clearToast, TOAST_DURATION_MS)
 }
 
+function inRange(value: number, min: number, max: number): boolean {
+  return Number.isInteger(value) && value >= min && value <= max
+}
+
 function validate(): boolean {
   for (const key of Object.keys(errors)) delete errors[key]
 
-  const description = form.platform_description.trim()
-  if (!form.platform_name.trim()) {
-    errors.platform_name = t('validation.platformName')
-  }
-  if (description.length > DESCRIPTION_MAX) {
-    errors.platform_description = t('validation.platformDescriptionMax')
+  if (!form.institute_name.trim()) {
+    errors.institute_name = t('validation.instituteName')
   }
   if (!EMAIL_PATTERN.test(form.support_email.trim())) {
     errors.support_email = t('validation.supportEmail')
+  }
+  if (
+    !inRange(Number(form.default_class_duration), CLASS_DURATION_MIN, CLASS_DURATION_MAX)
+  ) {
+    errors.default_class_duration = t('validation.classDuration')
+  }
+  if (
+    !inRange(Number(form.min_cancellation_hours), CANCELLATION_HOURS_MIN, CANCELLATION_HOURS_MAX)
+  ) {
+    errors.min_cancellation_hours = t('validation.cancellationHours')
   }
   if (!Number.isFinite(Number(form.default_hourly_rate)) || Number(form.default_hourly_rate) < 0) {
     errors.default_hourly_rate = t('validation.defaultRate')
@@ -85,11 +101,8 @@ function validate(): boolean {
   if (!form.currency.trim() || form.currency.trim().length > 16) {
     errors.currency = t('validation.currencyRequired')
   }
-  if (
-    !Number.isFinite(Number(form.min_withdrawal_amount)) ||
-    Number(form.min_withdrawal_amount) < 0
-  ) {
-    errors.min_withdrawal_amount = t('validation.minWithdrawal')
+  if (!inRange(Number(form.commission_rate), COMMISSION_MIN, COMMISSION_MAX)) {
+    errors.commission_rate = t('validation.commissionRate')
   }
 
   if (Object.keys(errors).length > 0) {
@@ -101,10 +114,9 @@ function validate(): boolean {
 }
 
 function tabForFirstError(): TabKey {
-  if (errors.platform_name || errors.platform_description || errors.support_email) return 'general'
-  if (errors.default_hourly_rate || errors.currency || errors.min_withdrawal_amount) {
-    return 'financial'
-  }
+  if (errors.institute_name || errors.support_email) return 'academic'
+  if (errors.default_class_duration || errors.min_cancellation_hours) return 'academic'
+  if (errors.default_hourly_rate || errors.currency || errors.commission_rate) return 'financial'
   return 'system'
 }
 
@@ -114,12 +126,13 @@ async function load(): Promise<void> {
 
   try {
     const settings = await fetchSettings()
-    form.platform_name = settings.platform_name
+    form.institute_name = settings.institute_name
     form.support_email = settings.support_email
-    form.platform_description = settings.platform_description
+    form.default_class_duration = settings.default_class_duration
+    form.min_cancellation_hours = settings.min_cancellation_hours
     form.default_hourly_rate = settings.default_hourly_rate
     form.currency = settings.currency
-    form.min_withdrawal_amount = settings.min_withdrawal_amount
+    form.commission_rate = settings.commission_rate
     form.enable_email_notifications = settings.enable_email_notifications
     form.maintenance_mode = settings.maintenance_mode
   } catch {
@@ -140,21 +153,23 @@ async function submit(): Promise<void> {
   saving.value = true
   try {
     const saved = await saveSettings({
-      platform_name: form.platform_name.trim(),
+      institute_name: form.institute_name.trim(),
       support_email: form.support_email.trim(),
-      platform_description: form.platform_description.trim(),
+      default_class_duration: Number(form.default_class_duration),
+      min_cancellation_hours: Number(form.min_cancellation_hours),
       default_hourly_rate: Number(form.default_hourly_rate),
       currency: form.currency.trim(),
-      min_withdrawal_amount: Number(form.min_withdrawal_amount),
+      commission_rate: Number(form.commission_rate),
       enable_email_notifications: form.enable_email_notifications,
       maintenance_mode: form.maintenance_mode,
     })
-    form.platform_name = saved.platform_name
+    form.institute_name = saved.institute_name
     form.support_email = saved.support_email
-    form.platform_description = saved.platform_description
+    form.default_class_duration = saved.default_class_duration
+    form.min_cancellation_hours = saved.min_cancellation_hours
     form.default_hourly_rate = saved.default_hourly_rate
     form.currency = saved.currency
-    form.min_withdrawal_amount = saved.min_withdrawal_amount
+    form.commission_rate = saved.commission_rate
     form.enable_email_notifications = saved.enable_email_notifications
     form.maintenance_mode = saved.maintenance_mode
     notify('success', t('admin.settings.saved'))
@@ -208,12 +223,12 @@ onMounted(load)
         </button>
       </div>
 
-      <div v-if="activeTab === 'general'" class="tab-panel" data-test="settings-panel-general">
+      <div v-if="activeTab === 'academic'" class="tab-panel" data-test="settings-panel-academic">
         <label class="field">
-          <span class="field-label">{{ t('admin.settings.platformName') }}</span>
-          <input v-model="form.platform_name" data-test="platform-name" type="text" />
-          <span v-if="errors.platform_name" class="field-error" data-test="platform-name-error">
-            {{ errors.platform_name }}
+          <span class="field-label">{{ t('admin.settings.instituteName') }}</span>
+          <input v-model="form.institute_name" data-test="institute-name" type="text" />
+          <span v-if="errors.institute_name" class="field-error" data-test="institute-name-error">
+            {{ errors.institute_name }}
           </span>
         </label>
 
@@ -225,23 +240,47 @@ onMounted(load)
           </span>
         </label>
 
-        <label class="field">
-          <span class="field-label">{{ t('admin.settings.description') }}</span>
-          <textarea
-            v-model="form.platform_description"
-            data-test="platform-description"
-            rows="4"
-            :placeholder="t('admin.settings.descriptionPlaceholder')"
-          />
-          <span class="field-hint">{{ t('admin.settings.descriptionHint') }}</span>
-          <span
-            v-if="errors.platform_description"
-            class="field-error"
-            data-test="platform-description-error"
-          >
-            {{ errors.platform_description }}
-          </span>
-        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field-label">{{ t('admin.settings.classDuration') }}</span>
+            <input
+              v-model.number="form.default_class_duration"
+              data-test="class-duration"
+              type="number"
+              min="1"
+              max="1440"
+              step="5"
+            />
+            <span class="field-hint">{{ t('admin.settings.classDurationHint') }}</span>
+            <span
+              v-if="errors.default_class_duration"
+              class="field-error"
+              data-test="class-duration-error"
+            >
+              {{ errors.default_class_duration }}
+            </span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">{{ t('admin.settings.cancellationHours') }}</span>
+            <input
+              v-model.number="form.min_cancellation_hours"
+              data-test="cancellation-hours"
+              type="number"
+              min="0"
+              max="720"
+              step="1"
+            />
+            <span class="field-hint">{{ t('admin.settings.cancellationHoursHint') }}</span>
+            <span
+              v-if="errors.min_cancellation_hours"
+              class="field-error"
+              data-test="cancellation-hours-error"
+            >
+              {{ errors.min_cancellation_hours }}
+            </span>
+          </label>
+        </div>
       </div>
 
       <div v-else-if="activeTab === 'financial'" class="tab-panel" data-test="settings-panel-financial">
@@ -278,23 +317,22 @@ onMounted(load)
         </label>
 
         <label class="field">
-          <span class="field-label">{{ t('admin.settings.minWithdrawal') }}</span>
+          <span class="field-label">{{ t('admin.settings.commissionRate') }}</span>
           <input
-            v-model.number="form.min_withdrawal_amount"
-            data-test="min-withdrawal"
+            v-model.number="form.commission_rate"
+            data-test="commission-rate"
             type="number"
             min="0"
-            step="10000"
+            max="100"
+            step="1"
           />
-          <span class="field-hint">
-            {{ t('admin.settings.minWithdrawalHint', { currency: currencyLabel }) }}
-          </span>
+          <span class="field-hint">{{ t('admin.settings.commissionRateHint') }}</span>
           <span
-            v-if="errors.min_withdrawal_amount"
+            v-if="errors.commission_rate"
             class="field-error"
-            data-test="min-withdrawal-error"
+            data-test="commission-rate-error"
           >
-            {{ errors.min_withdrawal_amount }}
+            {{ errors.commission_rate }}
           </span>
         </label>
       </div>
@@ -500,8 +538,15 @@ onMounted(load)
   gap: 18px;
 }
 
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
 .field {
   display: block;
+  flex: 1 1 220px;
   max-width: 520px;
   text-align: right;
 }
@@ -658,7 +703,6 @@ textarea:focus {
 }
 
 .form-actions {
-  padding-top: 4px;
   border-top: 1px solid var(--border);
   padding-top: 18px;
 }

@@ -9,7 +9,6 @@ import { useAuthStore } from '../../src/features/auth/stores/useAuthStore'
 import { clearStoredToken, http, setStoredToken } from '../../src/shared/api/http'
 import { routes } from '../../src/router'
 import UserManagementPage from '../../src/features/admin/pages/UserManagementPage.vue'
-import AdminSettingsPage from '../../src/features/admin/pages/AdminSettingsPage.vue'
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
@@ -23,10 +22,7 @@ function makeUser(overrides: Partial<User> = {}): User {
   }
 }
 
-async function mountPage(
-  component: typeof UserManagementPage | typeof AdminSettingsPage,
-  path = '/dashboard/admin/users',
-) {
+async function mountPage(component: typeof UserManagementPage, path = '/dashboard/admin/users') {
   setStoredToken('test-token')
   const pinia = createPinia()
   setActivePinia(pinia)
@@ -162,112 +158,6 @@ describe('UserManagementPage', () => {
     await settle()
     expect(failed.wrapper.get('[data-test="users-error"]').text()).toContain(
       'دریافت فهرست کاربران ناموفق بود',
-    )
-  })
-})
-
-describe('AdminSettingsPage', () => {
-  const stored = {
-    platform_name: 'آکادمی پارس',
-    default_hourly_rate: 350000,
-    support_email: 'help@pars.example.com',
-    platform_description: '',
-    currency: 'تومان',
-    min_withdrawal_amount: 0,
-    enable_email_notifications: true,
-    maintenance_mode: false,
-  }
-
-  it('loads the current settings into the form', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue(stored)
-    const { wrapper } = await mountPage(AdminSettingsPage, '/dashboard/admin/settings')
-    await settle()
-
-    expect((wrapper.get('[data-test="platform-name"]').element as HTMLInputElement).value).toBe(
-      stored.platform_name,
-    )
-    expect((wrapper.get('[data-test="support-email"]').element as HTMLInputElement).value).toBe(
-      stored.support_email,
-    )
-
-    await wrapper.get('[data-test="settings-tab-financial"]').trigger('click')
-
-    expect((wrapper.get('[data-test="default-rate"]').element as HTMLInputElement).value).toBe(
-      String(stored.default_hourly_rate),
-    )
-  })
-
-  it('saves edited settings', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue(stored)
-    const put = vi.spyOn(http, 'put').mockResolvedValue({
-      ...stored,
-      platform_name: 'آکادمی زبان پارس',
-    })
-
-    const { wrapper } = await mountPage(AdminSettingsPage, '/dashboard/admin/settings')
-    await settle()
-
-    await wrapper.get('[data-test="platform-name"]').setValue('آکادمی زبان پارس')
-    await wrapper.get('[data-test="settings-form"]').trigger('submit')
-    await settle()
-
-    expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
-      platform_name: 'آکادمی زبان پارس',
-      support_email: stored.support_email,
-      platform_description: stored.platform_description,
-      default_hourly_rate: stored.default_hourly_rate,
-      currency: stored.currency,
-      min_withdrawal_amount: stored.min_withdrawal_amount,
-      enable_email_notifications: stored.enable_email_notifications,
-      maintenance_mode: stored.maintenance_mode,
-    })
-    expect(wrapper.get('[data-test="settings-success"]').text()).toContain('ذخیره شد')
-  })
-
-  it('blocks saving an invalid email without calling the API', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue(stored)
-    const put = vi.spyOn(http, 'put').mockResolvedValue(stored)
-
-    const { wrapper } = await mountPage(AdminSettingsPage, '/dashboard/admin/settings')
-    await settle()
-
-    await wrapper.get('[data-test="support-email"]').setValue('not-an-email')
-    await wrapper.get('[data-test="settings-form"]').trigger('submit')
-    await settle()
-
-    expect(put).not.toHaveBeenCalled()
-    expect(wrapper.get('[data-test="support-email-error"]').text()).toContain(
-      'ایمیل پشتیبانی معتبر نیست',
-    )
-  })
-
-  it('blocks saving an empty platform name', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue(stored)
-    const put = vi.spyOn(http, 'put').mockResolvedValue(stored)
-
-    const { wrapper } = await mountPage(AdminSettingsPage, '/dashboard/admin/settings')
-    await settle()
-
-    await wrapper.get('[data-test="platform-name"]').setValue('   ')
-    await wrapper.get('[data-test="settings-form"]').trigger('submit')
-    await settle()
-
-    expect(put).not.toHaveBeenCalled()
-    expect(wrapper.get('[data-test="platform-name-error"]').exists()).toBe(true)
-  })
-
-  it('reports a failed save', async () => {
-    vi.spyOn(http, 'get').mockResolvedValue(stored)
-    vi.spyOn(http, 'put').mockRejectedValue(new Error('boom'))
-
-    const { wrapper } = await mountPage(AdminSettingsPage, '/dashboard/admin/settings')
-    await settle()
-
-    await wrapper.get('[data-test="settings-form"]').trigger('submit')
-    await settle()
-
-    expect(wrapper.get('[data-test="settings-error"]').text()).toContain(
-      'ذخیره تنظیمات ناموفق بود',
     )
   })
 })

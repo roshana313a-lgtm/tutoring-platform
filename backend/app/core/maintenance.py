@@ -21,7 +21,7 @@ from app.core.security import decode_access_token
 from app.repositories.setting_repository import SettingsRepository
 from app.services.platform_settings import is_maintenance_mode
 
-MAINTENANCE_MESSAGE = "سیستم موقتاً در حال به‌روزرسانی است. لطفاً بعداً مراجعه کنید."
+MAINTENANCE_MESSAGE = "سامانه موقتاً در حال به‌روزرسانی است. لطفاً بعداً مراجعه کنید."
 ADMIN_ROLE = "admin"
 # Public endpoints that must keep answering while the platform is closed.
 ALWAYS_ALLOWED_PATHS = frozenset({"/health", "/api/v1/auth/login"})
