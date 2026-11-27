@@ -135,6 +135,11 @@ export const routes: RouteRecordRaw[] = [
         meta: { title: 'nav.titles.quality' },
       },
       {
+        // The admin area deep-links to its own quality path; keep both forms working.
+        path: 'admin/quality',
+        redirect: { name: 'dashboard-quality' },
+      },
+      {
         path: 'settings',
         name: 'dashboard-settings',
         component: PlaceholderPage,

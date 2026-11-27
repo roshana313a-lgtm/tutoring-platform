@@ -134,6 +134,51 @@ describe('action center', () => {
   })
 })
 
+describe('stat card navigation', () => {
+  it('makes every card a link to its own page', async () => {
+    const wrapper = await mountDashboard({ pending: 1 })
+
+    expect(wrapper.get('[data-test="admin-stat-users-link"]').attributes('href')).toBe(
+      '/dashboard/admin/users',
+    )
+    expect(wrapper.get('[data-test="admin-pending-instructors-link"]').attributes('href')).toBe(
+      '/dashboard/manage-instructors?status=pending',
+    )
+    expect(wrapper.get('[data-test="admin-stat-classes-link"]').attributes('href')).toBe(
+      '/dashboard/quality',
+    )
+    for (const link of wrapper.findAll('.stat-card-link')) {
+      expect(link.element.tagName).toBe('A')
+    }
+  })
+})
+
+describe('recent user avatars', () => {
+  it('renders a round image when the user has an avatar', async () => {
+    const wrapper = await mountDashboard({
+      users: [
+        person('s1', 'mini@example.com', 'student', '2026-11-27T08:00:00Z', {
+          avatar_url: '/media/avatars/mini.png',
+        }),
+      ],
+    })
+
+    const image = wrapper.get('[data-test="row-avatar-image"]')
+    expect(image.attributes('src')).toBe('/media/avatars/mini.png')
+    expect(image.classes()).toContain('row-avatar')
+    expect(image.attributes('alt')).toBe('')
+  })
+
+  it('falls back to the initial letter without an avatar', async () => {
+    const wrapper = await mountDashboard({
+      users: [person('s1', 'zahra@example.com', 'student', '2026-11-27T08:00:00Z')],
+    })
+
+    expect(wrapper.find('[data-test="row-avatar-image"]').exists()).toBe(false)
+    expect(wrapper.get('.row-avatar').text()).toBe('Z')
+  })
+})
+
 describe('visual analytics', () => {
   it('feeds the registration trend into the line chart', async () => {
     const wrapper = await mountDashboard({ days: sevenDays([0, 1, 2, 1, 0, 3, 1]) })

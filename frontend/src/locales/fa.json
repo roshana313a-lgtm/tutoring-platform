@@ -152,7 +152,9 @@
         "pendingHint": "درخواست بررسی نشده",
         "pendingCta": "بررسی درخواست‌ها",
         "classes": "کلاس‌های فعال",
-        "classesHint": "جلسات در حال برگزاری"
+        "classesHint": "جلسات در حال برگزاری",
+        "usersCta": "مشاهده کاربران",
+        "classesCta": "مشاهده کیفیت خدمات"
       },
       "quickActions": {
         "title": "دسترسی سریع",

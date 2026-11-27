@@ -5,6 +5,7 @@ import { LoaderCircle, ShieldBan, ShieldCheck, Users } from 'lucide-vue-next'
 
 import { fetchUsers, toggleUserSuspension } from '../api/users'
 import type { User } from '../../auth/api/auth'
+import { resolveMediaUrl } from '../../../shared/api/media'
 
 const { t } = useI18n()
 
@@ -18,6 +19,14 @@ const busyId = ref<string | null>(null)
 function displayName(user: User): string {
   const fullName = user.full_name?.trim()
   return fullName && fullName.length > 0 ? fullName : '—'
+}
+
+function avatarSrc(user: User): string {
+  return resolveMediaUrl(user.avatar_url)
+}
+
+function initial(user: User): string {
+  return displayName(user).charAt(0).toUpperCase()
 }
 
 function roleLabel(user: User): string {
@@ -108,7 +117,19 @@ onMounted(load)
           </thead>
           <tbody>
             <tr v-for="user in users" :key="user.id" data-test="user-row">
-              <td class="name">{{ displayName(user) }}</td>
+              <td class="name">
+                <span class="name-cell">
+                  <img
+                    v-if="avatarSrc(user)"
+                    :src="avatarSrc(user)"
+                    class="name-avatar name-avatar-image"
+                    alt=""
+                    data-test="user-avatar-image"
+                  />
+                  <span v-else class="name-avatar" aria-hidden="true">{{ initial(user) }}</span>
+                  <span>{{ displayName(user) }}</span>
+                </span>
+              </td>
               <td class="email">{{ user.email }}</td>
               <td>
                 <span class="role-chip" data-test="user-role">{{ roleLabel(user) }}</span>
@@ -274,6 +295,30 @@ onMounted(load)
 
 .name {
   font-weight: 600;
+}
+
+.name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.name-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.name-avatar-image {
+  padding: 0;
+  object-fit: cover;
 }
 
 .email {

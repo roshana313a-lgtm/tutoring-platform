@@ -52,7 +52,9 @@ interface StatCard {
   value: string
   hint: string
   icon: Component
-  to?: RouteLocationRaw
+  to: RouteLocationRaw
+  cta: string
+  testId: string
 }
 
 interface QuickAction {
@@ -105,6 +107,9 @@ const cards = computed<StatCard[]>(() => [
     value: formatCount(stats.value?.total_users),
     hint: t('dashboard.admin.stats.usersHint'),
     icon: Users,
+    to: { name: 'dashboard-admin-users' },
+    cta: t('dashboard.admin.stats.usersCta'),
+    testId: 'admin-stat-users-link',
   },
   {
     key: 'pending',
@@ -113,6 +118,8 @@ const cards = computed<StatCard[]>(() => [
     hint: t('dashboard.admin.stats.pendingHint'),
     icon: GraduationCap,
     to: { name: 'dashboard-manage-instructors', query: { status: 'pending' } },
+    cta: t('dashboard.admin.stats.pendingCta'),
+    testId: 'admin-pending-instructors-link',
   },
   {
     key: 'classes',
@@ -120,6 +127,9 @@ const cards = computed<StatCard[]>(() => [
     value: formatCount(stats.value?.active_classes),
     hint: t('dashboard.admin.stats.classesHint'),
     icon: BookOpen,
+    to: { name: 'dashboard-quality' },
+    cta: t('dashboard.admin.stats.classesCta'),
+    testId: 'admin-stat-classes-link',
   },
 ])
 
@@ -299,6 +309,10 @@ function userInitial(user: User): string {
   return userLabel(user).charAt(0).toUpperCase()
 }
 
+function userAvatar(user: User): string {
+  return resolveMediaUrl(user.avatar_url)
+}
+
 function roleLabel(role: User['role']): string {
   return role === 'admin' || role === 'instructor' ? t(`roles.${role}`) : t('roles.student')
 }
@@ -418,14 +432,13 @@ onMounted(() => {
     </p>
 
     <div class="stat-grid" data-test="admin-stats">
-      <component
-        :is="card.to ? RouterLink : 'article'"
+      <RouterLink
         v-for="card in cards"
         :key="card.key"
         :to="card.to"
-        class="stat-card"
-        :class="[`stat-${card.key}`, { 'stat-card-link': card.to }]"
-        :data-test="card.to ? 'admin-pending-instructors-link' : `admin-stat-${card.key}`"
+        class="stat-card stat-card-link"
+        :class="`stat-${card.key}`"
+        :data-test="card.testId"
       >
         <span class="stat-icon" aria-hidden="true">
           <component :is="card.icon" :size="20" :stroke-width="1.9" />
@@ -433,11 +446,11 @@ onMounted(() => {
         <span class="stat-label">{{ card.title }}</span>
         <strong class="stat-value" data-test="stat-value">{{ card.value }}</strong>
         <span class="stat-hint">{{ card.hint }}</span>
-        <span v-if="card.to" class="stat-cta">
-          {{ t('dashboard.admin.stats.pendingCta') }}
+        <span class="stat-cta">
+          {{ card.cta }}
           <ChevronLeft :size="14" />
         </span>
-      </component>
+      </RouterLink>
     </div>
 
     <p v-if="loading" class="loading-note" data-test="admin-stats-loading">
@@ -565,7 +578,14 @@ onMounted(() => {
               <tr v-for="user in recentUsers" :key="user.id" data-test="recent-user">
                 <td>
                   <span class="row-user">
-                    <span class="row-avatar" aria-hidden="true">{{ userInitial(user) }}</span>
+                    <img
+                      v-if="userAvatar(user)"
+                      :src="userAvatar(user)"
+                      class="row-avatar row-avatar-image"
+                      alt=""
+                      data-test="row-avatar-image"
+                    />
+                    <span v-else class="row-avatar" aria-hidden="true">{{ userInitial(user) }}</span>
                     <span class="row-name">{{ userLabel(user) }}</span>
                   </span>
                 </td>
@@ -1135,6 +1155,11 @@ onMounted(() => {
   color: var(--primary);
   font-size: var(--font-size-xs);
   font-weight: 700;
+}
+
+.row-avatar-image {
+  object-fit: cover;
+  padding: 0;
 }
 
 .row-name {
