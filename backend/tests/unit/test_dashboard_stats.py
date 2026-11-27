@@ -65,6 +65,7 @@ async def test_admin_stats_count_the_real_database_rows(
         "pending_instructors": 2,
         "total_users": 5,
         "active_classes": 0,
+        "open_complaints": 0,
     }
     assert pending["user"]["email"] == "stats-pending-2@example.com"
 

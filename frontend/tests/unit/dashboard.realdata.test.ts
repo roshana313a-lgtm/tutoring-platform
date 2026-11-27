@@ -85,10 +85,10 @@ afterEach(() => {
 describe('admin dashboard real stats', () => {
   it('shows the exact counts returned by the API', async () => {
     const wrapper = await mountDashboard(AdminDashboard, 'admin', {
-      admin: { pending_instructors: 1, total_users: 5, active_classes: 0 },
+      admin: { pending_instructors: 1, total_users: 5, active_classes: 0, open_complaints: 2 },
     })
 
-    expect(statValues(wrapper)).toEqual([fa(5), fa(1), fa(0)])
+    expect(statValues(wrapper)).toEqual([fa(5), fa(1), fa(0), fa(2)])
 
     const pendingCard = wrapper.get('[data-test="admin-pending-instructors-link"]')
     expect(pendingCard.attributes('href')).toBe('/dashboard/manage-instructors?status=pending')
@@ -97,7 +97,7 @@ describe('admin dashboard real stats', () => {
 
   it('links the quick actions to the matching admin pages', async () => {
     const wrapper = await mountDashboard(AdminDashboard, 'admin', {
-      admin: { pending_instructors: 1, total_users: 5, active_classes: 0 },
+      admin: { pending_instructors: 1, total_users: 5, active_classes: 0, open_complaints: 0 },
     })
 
     expect(wrapper.get('[data-test="quick-action-approve"]').attributes('href')).toBe(
@@ -121,7 +121,7 @@ describe('admin dashboard real stats', () => {
     })
 
     const wrapper = await mountDashboard(AdminDashboard, 'admin', {
-      admin: { pending_instructors: 0, total_users: 6, active_classes: 0 },
+      admin: { pending_instructors: 0, total_users: 6, active_classes: 0, open_complaints: 0 },
       users: [
         registration('u-3', 'third@example.com', '2026-11-24T10:00:00Z'),
         registration('u-1', 'newest@example.com', '2026-11-26T10:00:00Z', 'instructor'),
@@ -148,7 +148,7 @@ describe('admin dashboard real stats', () => {
   it('never shows a hardcoded value when the API fails', async () => {
     const wrapper = await mountDashboard(AdminDashboard, 'admin', { fail: true })
 
-    expect(statValues(wrapper)).toEqual(['—', '—', '—'])
+    expect(statValues(wrapper)).toEqual(['—', '—', '—', '—'])
     expect(wrapper.get('[data-test="admin-stats-error"]').text()).toContain(
       'دریافت آمار داشبورد ناموفق بود',
     )

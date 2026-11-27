@@ -13,6 +13,8 @@ const UserManagementPage = () => import('../features/admin/pages/UserManagementP
 const AdminSettingsPage = () => import('../features/admin/pages/AdminSettingsPage.vue')
 const ManageInstructorsPage = () => import('../features/admin/pages/ManageInstructorsPage.vue')
 const ServiceQualityPage = () => import('../features/admin/pages/ServiceQualityPage.vue')
+const ComplaintsPage = () => import('../features/admin/pages/ComplaintsPage.vue')
+const SupportPage = () => import('../features/support/pages/SupportPage.vue')
 const ProfilePage = () => import('../features/profile/pages/ProfilePage.vue')
 
 export const routes: RouteRecordRaw[] = [
@@ -138,6 +140,18 @@ export const routes: RouteRecordRaw[] = [
         // The admin area deep-links to its own quality path; keep both forms working.
         path: 'admin/quality',
         redirect: { name: 'dashboard-quality' },
+      },
+      {
+        path: 'admin/complaints',
+        name: 'dashboard-admin-complaints',
+        component: ComplaintsPage,
+        meta: { title: 'nav.titles.complaints' },
+      },
+      {
+        path: 'support',
+        name: 'dashboard-support',
+        component: SupportPage,
+        meta: { title: 'nav.titles.support' },
       },
       {
         path: 'settings',

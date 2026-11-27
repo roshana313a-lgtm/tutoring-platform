@@ -57,7 +57,12 @@ async function mountWithUser(
 function mockDashboardStats() {
   vi.spyOn(http, 'get').mockImplementation((url: string) => {
     if (url === '/api/v1/dashboard/admin/stats') {
-      return Promise.resolve({ pending_instructors: 1, total_users: 5, active_classes: 0 })
+      return Promise.resolve({
+        pending_instructors: 1,
+        total_users: 5,
+        active_classes: 0,
+        open_complaints: 0,
+      })
     }
     if (url === '/api/v1/dashboard/instructor/stats') {
       return Promise.resolve({ today_classes: 0, pending_grading: 0, total_students: 0 })

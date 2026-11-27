@@ -7,11 +7,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
 from app.core.deps import require_role
+from app.models.complaint import Complaint
 from app.models.user import User
+from app.repositories.complaint_repository import ComplaintRepository
 from app.repositories.setting_repository import SettingsRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.admin import PlatformSettingsResponse, PlatformSettingsUpdate
 from app.schemas.auth import UserResponse
+from app.schemas.complaint import (
+    AdminComplaintItem,
+    ComplaintResponse,
+    ComplaintStatusUpdate,
+)
 from app.schemas.dashboard import (
     RegistrationDay,
     RegistrationTrend,
@@ -40,6 +47,17 @@ async def _get_instructor(repo: UserRepository, instructor_id: uuid.UUID) -> Use
     if user is None or user.role != INSTRUCTOR_ROLE:
         raise _instructor_not_found()
     return user
+
+
+def _complaint_item(complaint: Complaint, user: User) -> AdminComplaintItem:
+    """Flatten a complaint plus its submitter into the admin table row."""
+    response = ComplaintResponse.model_validate(complaint)
+    name = user.full_name.strip() or user.email.split("@")[0]
+    return AdminComplaintItem(
+        **response.model_dump(),
+        user_name=name,
+        user_email=user.email,
+    )
 
 
 @router.get("/users", response_model=list[UserResponse])
@@ -107,6 +125,36 @@ async def list_instructors(
 
 # The dashboard chart always shows a full week, including days with no signups.
 REGISTRATION_WINDOW_DAYS = 7
+
+
+@router.get("/complaints", response_model=list[AdminComplaintItem])
+async def list_complaints(
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[AdminComplaintItem]:
+    """Every support ticket with its submitter, newest first."""
+    rows = await ComplaintRepository(db).list_with_users()
+    return [_complaint_item(complaint, user) for complaint, user in rows]
+
+
+@router.patch("/complaints/{complaint_id}/status", response_model=ComplaintResponse)
+async def update_complaint_status(
+    complaint_id: uuid.UUID,
+    data: ComplaintStatusUpdate,
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ComplaintResponse:
+    """Move a ticket to in-progress or resolved."""
+    repo = ComplaintRepository(db)
+    complaint = await repo.get_by_id(complaint_id)
+    if complaint is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "COMPLAINT_NOT_FOUND", "message": "Complaint not found"},
+        )
+
+    updated = await repo.update_status(complaint, data.status)
+    return ComplaintResponse.model_validate(updated)
 
 
 @router.get("/stats/registrations", response_model=RegistrationTrend)

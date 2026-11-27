@@ -8,6 +8,7 @@ class AdminDashboardStats(BaseModel):
     pending_instructors: int
     total_users: int
     active_classes: int
+    open_complaints: int
 
 
 class InstructorDashboardStats(BaseModel):
