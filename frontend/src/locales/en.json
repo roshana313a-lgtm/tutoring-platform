@@ -435,6 +435,40 @@
       }
     }
   },
+  "instructors": {
+    "discovery": {
+      "eyebrow": "Find an instructor",
+      "title": "Instructor search",
+      "subtitle": "Find approved instructors by name, language or price.",
+      "search": "Search by name or language",
+      "searchPlaceholder": "e.g. English or Sara",
+      "maxPrice": "Maximum hourly price",
+      "maxPricePlaceholder": "e.g. 500000",
+      "submit": "Search",
+      "reset": "Clear",
+      "empty": "No instructor matched these filters.",
+      "emptyHint": "Try another search term or a higher price cap.",
+      "viewProfile": "View profile",
+      "noLanguage": "No teaching language recorded"
+    },
+    "profile": {
+      "eyebrow": "Instructor profile",
+      "back": "Back to search",
+      "rating": "Rating",
+      "noRating": "No rating yet",
+      "experience": "Teaching experience",
+      "years": "{count} years",
+      "education": "Education",
+      "languages": "Teaching languages",
+      "rate": "Hourly rate",
+      "bio": "About the instructor",
+      "noBio": "No description recorded yet.",
+      "book": "Book a class",
+      "bookHint": "Class booking arrives in the next step.",
+      "error": "Could not load the instructor profile.",
+      "notFound": "This instructor is not available."
+    }
+  },
   "placeholder": {
     "fallback": "This section",
     "body": "This section is under construction and will be available soon."

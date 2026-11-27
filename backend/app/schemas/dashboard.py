@@ -61,3 +61,22 @@ class InstructorListItem(BaseModel):
     hourly_rate: int
     education_level: str
     avatar_url: str
+    # No reviews table exists yet, so this stays null until the first rating.
+    average_rating: float | None = None
+
+
+class InstructorProfileOut(BaseModel):
+    """Full public profile of a single approved instructor."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    full_name: str
+    avatar_url: str
+    short_summary: str
+    bio: str
+    teaching_languages: list[str]
+    hourly_rate: int
+    average_rating: float | None = None
+    years_of_experience: int
+    education_level: str
