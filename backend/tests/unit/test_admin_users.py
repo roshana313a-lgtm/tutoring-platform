@@ -66,6 +66,27 @@ async def test_admin_lists_students_and_instructors_only(
 
 
 @pytest.mark.asyncio
+async def test_admin_user_list_includes_the_uploaded_avatar(
+    client: AsyncClient,
+    user_factory: UserFactory,
+) -> None:
+    token, student = await register(client, "avatar-student@example.com", "student")
+    updated = await client.put(
+        "/api/v1/auth/profile",
+        json={"avatar_url": "/media/avatars/listed.png"},
+        headers=auth_headers(token),
+    )
+    assert updated.status_code == 200
+    headers = auth_headers(await token_for(user_factory, "avatar-admin@example.com", "admin"))
+
+    response = await client.get("/api/v1/admin/users", headers=headers)
+
+    assert response.status_code == 200
+    listed = next(user for user in response.json() if user["id"] == student["id"])
+    assert listed["avatar_url"] == "/media/avatars/listed.png"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("role", ["student", "instructor"])
 async def test_only_admin_can_list_or_suspend_users(
     client: AsyncClient,

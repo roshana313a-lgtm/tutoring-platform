@@ -152,7 +152,9 @@
         "pendingHint": "Requests not reviewed yet",
         "pendingCta": "Review requests",
         "classes": "Active classes",
-        "classesHint": "Sessions in progress"
+        "classesHint": "Sessions in progress",
+        "usersCta": "View users",
+        "classesCta": "View service quality"
       },
       "quickActions": {
         "title": "Quick actions",

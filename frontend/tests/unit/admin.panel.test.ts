@@ -79,6 +79,28 @@ describe('UserManagementPage', () => {
     expect(wrapper.findAll('[data-test="toggle-button"]')[0]?.text()).toContain('مسدود کردن')
   })
 
+  it('renders the avatar image in the name column when one is uploaded', async () => {
+    vi.spyOn(http, 'get').mockResolvedValue([
+      makeUser({ id: 'id-1', full_name: 'علی احمدی', avatar_url: '/media/avatars/ali.png' }),
+    ])
+    const { wrapper } = await mountPage(UserManagementPage)
+    await settle()
+
+    const image = wrapper.get('[data-test="user-avatar-image"]')
+    expect(image.attributes('src')).toBe('/media/avatars/ali.png')
+    expect(image.classes()).toContain('name-avatar')
+    expect(wrapper.get('[data-test="user-row"]').text()).toContain('علی احمدی')
+  })
+
+  it('falls back to the initial letter when there is no avatar', async () => {
+    vi.spyOn(http, 'get').mockResolvedValue([makeUser({ id: 'id-1', full_name: 'سارا کریمی' })])
+    const { wrapper } = await mountPage(UserManagementPage)
+    await settle()
+
+    expect(wrapper.find('[data-test="user-avatar-image"]').exists()).toBe(false)
+    expect(wrapper.get('.name-avatar').text()).toBe('س')
+  })
+
   it('suspends an active user and flips the button to reactivate', async () => {
     vi.spyOn(http, 'get').mockResolvedValue([makeUser({ id: 'id-1', is_active: true })])
     const patch = vi

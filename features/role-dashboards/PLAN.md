@@ -95,6 +95,13 @@ Decisions:
 | Activity timeline | `GET /admin/users` + `GET /admin/instructors` | Three newest users plus the two newest approved instructors, de-duplicated and sorted newest first |
 | System health | Live request outcomes | Server online, database connected and API healthy are derived from the four requests, so a failure shows as degraded |
 
+- **Clickable stats.** Every stat card is a `RouterLink` (users → `/dashboard/admin/users`,
+  pending → `/dashboard/manage-instructors?status=pending`, classes → `/dashboard/quality`,
+  also reachable as `/dashboard/admin/quality` through a redirect). Hover lifts and shadows them.
+- **Avatars in admin tables.** `GET /admin/users` already serializes `avatar_url`; the recent-users
+  table and the user-management table resolve it through `resolveMediaUrl()` and render a 32 px
+  circular `object-fit: cover` image, falling back to the initial letter when it is empty.
+
 Dependencies & rationale:
 
 - **`chart.js` + `vue-chartjs@5`.** Chart.js is the maintained canvas chart library that Vue 3
