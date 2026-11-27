@@ -34,8 +34,6 @@ const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 
-const notificationCount = 3
-
 const studentMenu: MenuItem[] = [
   { label: 'جستجوی مدرس', to: { name: 'dashboard-instructor-search' }, icon: Search },
   { label: 'کلاس‌های من', to: { name: 'dashboard-classes' }, icon: CalendarDays },
@@ -194,12 +192,11 @@ async function logout(): Promise<void> {
 
           <button
             type="button"
-            class="icon-button notification-button"
+            class="icon-button"
             aria-label="اعلانها"
             data-test="topbar-notifications"
           >
             <Bell :size="19" />
-            <span class="notification-badge">{{ notificationCount }}</span>
           </button>
 
           <div class="user-menu" data-test="topbar-user">
@@ -485,22 +482,6 @@ h1 {
   border-color: var(--primary);
   background: var(--primary-light);
   color: var(--primary);
-}
-
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  display: grid;
-  place-items: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: #dc2626;
-  color: #fff;
-  font-size: var(--font-size-xs);
-  font-weight: 700;
 }
 
 .user-menu {
