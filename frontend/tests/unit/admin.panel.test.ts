@@ -171,6 +171,11 @@ describe('AdminSettingsPage', () => {
     platform_name: 'آکادمی پارس',
     default_hourly_rate: 350000,
     support_email: 'help@pars.example.com',
+    platform_description: '',
+    currency: 'تومان',
+    min_withdrawal_amount: 0,
+    enable_email_notifications: true,
+    maintenance_mode: false,
   }
 
   it('loads the current settings into the form', async () => {
@@ -181,11 +186,14 @@ describe('AdminSettingsPage', () => {
     expect((wrapper.get('[data-test="platform-name"]').element as HTMLInputElement).value).toBe(
       stored.platform_name,
     )
-    expect((wrapper.get('[data-test="default-rate"]').element as HTMLInputElement).value).toBe(
-      String(stored.default_hourly_rate),
-    )
     expect((wrapper.get('[data-test="support-email"]').element as HTMLInputElement).value).toBe(
       stored.support_email,
+    )
+
+    await wrapper.get('[data-test="settings-tab-financial"]').trigger('click')
+
+    expect((wrapper.get('[data-test="default-rate"]').element as HTMLInputElement).value).toBe(
+      String(stored.default_hourly_rate),
     )
   })
 
@@ -205,8 +213,13 @@ describe('AdminSettingsPage', () => {
 
     expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
       platform_name: 'آکادمی زبان پارس',
-      default_hourly_rate: stored.default_hourly_rate,
       support_email: stored.support_email,
+      platform_description: stored.platform_description,
+      default_hourly_rate: stored.default_hourly_rate,
+      currency: stored.currency,
+      min_withdrawal_amount: stored.min_withdrawal_amount,
+      enable_email_notifications: stored.enable_email_notifications,
+      maintenance_mode: stored.maintenance_mode,
     })
     expect(wrapper.get('[data-test="settings-success"]').text()).toContain('ذخیره شد')
   })

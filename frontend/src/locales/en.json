@@ -16,7 +16,8 @@
     "emptyValue": "—",
     "currency": "Toman",
     "perHour": "Toman / hour",
-    "negotiable": "Negotiable"
+    "negotiable": "Negotiable",
+    "close": "Close"
   },
   "roles": {
     "admin": "Admin",
@@ -118,7 +119,10 @@
     "summaryMax": "The summary cannot be longer than 200 characters",
     "platformName": "Enter the platform name",
     "defaultRate": "The default rate must be a non-negative number",
-    "supportEmail": "Enter a valid support email"
+    "supportEmail": "Enter a valid support email",
+    "platformDescriptionMax": "The description cannot be longer than 1000 characters",
+    "currencyRequired": "Enter a currency",
+    "minWithdrawal": "The minimum withdrawal must be a non-negative number"
   },
   "errors": {
     "unknown": "Something went wrong. Please try again.",
@@ -376,12 +380,32 @@
     "settings": {
       "eyebrow": "Platform settings",
       "title": "Settings",
-      "subtitle": "General institute configuration",
+      "subtitle": "General, financial and system configuration for the institute",
+      "tabsAria": "Settings sections",
+      "tabs": {
+        "general": "General",
+        "financial": "Financial",
+        "system": "System"
+      },
       "platformName": "Platform name",
-      "defaultRate": "Default hourly rate (Toman)",
       "supportEmail": "Support email",
+      "description": "Platform description",
+      "descriptionPlaceholder": "A short introduction to the institute for students…",
+      "descriptionHint": "At most 1000 characters",
+      "defaultRate": "Default hourly rate",
+      "currency": "Currency",
+      "currencyPlaceholder": "e.g. Toman",
+      "currencyFallback": "currency",
+      "minWithdrawal": "Minimum withdrawal amount",
+      "minWithdrawalHint": "The smallest instructor payout request, in {currency}",
+      "emailNotifications": "Email notifications",
+      "emailNotificationsHint": "Send notification emails to students and instructors",
+      "maintenanceMode": "Maintenance mode",
+      "maintenanceModeHint": "Students and instructors are temporarily locked out; admins keep access.",
+      "maintenanceWarning": "Maintenance mode is on: visitors get the “the system is being updated” message.",
+      "securityNote": "Your admin email and role are changed from the “My profile” page, not here.",
       "saved": "Settings saved.",
-      "submit": "Save settings"
+      "submit": "Save changes"
     },
     "complaints": {
       "eyebrow": "Support",
