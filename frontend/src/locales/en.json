@@ -134,7 +134,8 @@
     "avatarUpload": "The image upload failed. Please try again.",
     "action": "This action failed. Please try again.",
     "userToggle": "Could not change the user status. Please try again.",
-    "formErrors": "Please fix the form errors."
+    "formErrors": "Please fix the form errors.",
+    "registrationTrend": "Could not load the registration trend."
   },
   "dashboard": {
     "welcome": "Welcome, {name}",
@@ -171,6 +172,37 @@
         "email": "Email",
         "role": "Role",
         "joined": "Joined"
+      },
+      "alert": {
+        "title": "You have {count} instructor approval requests",
+        "hint": "Instructor sign-up requests are waiting for your review.",
+        "action": "Review requests"
+      },
+      "charts": {
+        "registrationsTitle": "User registration trend",
+        "registrationsSubtitle": "The last seven days",
+        "registrationLabel": "Registrations",
+        "ratioTitle": "User mix",
+        "ratioSubtitle": "Students compared with instructors",
+        "students": "Student",
+        "instructors": "Instructor"
+      },
+      "timeline": {
+        "title": "Activity log",
+        "subtitle": "The five latest actions on the platform",
+        "userRegistered": "New user registered",
+        "instructorApproved": "Instructor approved",
+        "empty": "No activity to show yet."
+      },
+      "health": {
+        "title": "System health",
+        "server": "Server status",
+        "database": "Database",
+        "api": "API status",
+        "online": "Online",
+        "connected": "Connected",
+        "healthy": "Healthy",
+        "degraded": "Degraded"
       }
     },
     "student": {

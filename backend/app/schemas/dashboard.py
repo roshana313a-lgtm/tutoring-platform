@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
@@ -31,6 +32,19 @@ class ServiceQualityStats(BaseModel):
     total_classes: int
     average_rating: float
     suspended_users: int
+
+
+class RegistrationDay(BaseModel):
+    """How many accounts were created on one calendar day (UTC)."""
+
+    date: date
+    count: int
+
+
+class RegistrationTrend(BaseModel):
+    """Oldest-to-newest registration counts; days without signups report 0."""
+
+    days: list[RegistrationDay]
 
 
 class InstructorListItem(BaseModel):
