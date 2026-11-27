@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -11,7 +12,11 @@ from app.repositories.setting_repository import SettingsRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.admin import PlatformSettingsResponse, PlatformSettingsUpdate
 from app.schemas.auth import UserResponse
-from app.schemas.dashboard import ServiceQualityStats
+from app.schemas.dashboard import (
+    RegistrationDay,
+    RegistrationTrend,
+    ServiceQualityStats,
+)
 from app.services.platform_settings import build_settings
 
 INSTRUCTOR_ROLE = "instructor"
@@ -98,6 +103,29 @@ async def list_instructors(
     """Every instructor account, including pending and suspended profiles."""
     instructors = await UserRepository(db).list_role(INSTRUCTOR_ROLE)
     return [UserResponse.model_validate(instructor) for instructor in instructors]
+
+
+# The dashboard chart always shows a full week, including days with no signups.
+REGISTRATION_WINDOW_DAYS = 7
+
+
+@router.get("/stats/registrations", response_model=RegistrationTrend)
+async def read_registration_trend(
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> RegistrationTrend:
+    """Daily account creations for the last seven days, oldest first."""
+    today = datetime.now(UTC).date()
+    first_day = today - timedelta(days=REGISTRATION_WINDOW_DAYS - 1)
+    counts = await UserRepository(db).count_registrations_by_day(first_day)
+
+    days = [
+        RegistrationDay(date=day, count=counts.get(day, 0))
+        for day in (
+            first_day + timedelta(days=offset) for offset in range(REGISTRATION_WINDOW_DAYS)
+        )
+    ]
+    return RegistrationTrend(days=days)
 
 
 @router.get("/quality", response_model=ServiceQualityStats)

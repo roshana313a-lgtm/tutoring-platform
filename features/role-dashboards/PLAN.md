@@ -84,3 +84,23 @@ Decisions:
 1. **Recent activity reuses the admin users list.** The endpoint already returns managed users newest
    first, so no new backend route was needed; the client re-sorts defensively before slicing five.
 2. **No new dependency.** Icons come from `lucide-vue-next`, formatting from `Intl` (`fa-IR`).
+
+## Admin command center (analytics, logs, health)
+
+| Piece | Source | Notes |
+| --- | --- | --- |
+| Action center | `GET /dashboard/admin/stats` | Orange banner while `pending_instructors > 0`, hidden otherwise, deep-links to the pending tab |
+| Registration trend | `GET /admin/stats/registrations` | Seven UTC days, oldest first, zero-filled; rendered as a filled line chart |
+| User mix | `GET /admin/users` | Doughnut of students vs instructors, computed from the managed-user list |
+| Activity timeline | `GET /admin/users` + `GET /admin/instructors` | Three newest users plus the two newest approved instructors, de-duplicated and sorted newest first |
+| System health | Live request outcomes | Server online, database connected and API healthy are derived from the four requests, so a failure shows as degraded |
+
+Dependencies & rationale:
+
+- **`chart.js` + `vue-chartjs@5`.** Chart.js is the maintained canvas chart library that Vue 3
+  wrappers target; `vue-chartjs` only supplies thin `<Line>` / `<Doughnut>` components, so the
+  datasets stay plain Chart.js config and no extra abstraction leaks into the app. They are only
+  imported by the lazy-loaded admin dashboard chunk (≈193 kB, gzip ≈68 kB).
+- **No new backend dependency.** The trend endpoint groups `users.created_at` with `func.date`,
+  which both SQLite and PostgreSQL support.
+

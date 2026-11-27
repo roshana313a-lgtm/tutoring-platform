@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -84,6 +85,19 @@ class UserRepository:
             )
             or 0
         )
+
+    async def count_registrations_by_day(self, since: date) -> dict[date, int]:
+        """Accounts created on or after `since`, grouped by calendar day (UTC)."""
+        rows = await self.db.execute(
+            select(func.date(User.created_at).label("day"), func.count())
+            .where(func.date(User.created_at) >= since)
+            .group_by(func.date(User.created_at))
+        )
+        counts: dict[date, int] = {}
+        for day, count in rows.all():
+            key = day if isinstance(day, date) else date.fromisoformat(str(day))
+            counts[key] = int(count)
+        return counts
 
     async def list_by_roles(self, roles: list[str]) -> list[User]:
         """All users holding one of `roles`, newest first."""

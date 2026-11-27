@@ -134,7 +134,8 @@
     "avatarUpload": "آپلود تصویر ناموفق بود. دوباره تلاش کنید.",
     "action": "انجام این عملیات ناموفق بود. دوباره تلاش کنید.",
     "userToggle": "تغییر وضعیت کاربر ناموفق بود. دوباره تلاش کنید.",
-    "formErrors": "لطفاً خطاهای فرم را برطرف کنید."
+    "formErrors": "لطفاً خطاهای فرم را برطرف کنید.",
+    "registrationTrend": "دریافت روند ثبت‌نام ناموفق بود."
   },
   "dashboard": {
     "welcome": "خوش آمدید، {name}",
@@ -171,6 +172,37 @@
         "email": "ایمیل",
         "role": "نقش",
         "joined": "تاریخ عضویت"
+      },
+      "alert": {
+        "title": "شما {count} درخواست تایید مدرس دارید",
+        "hint": "درخواست‌های ثبت‌نام مدرسان منتظر بررسی شما هستند.",
+        "action": "بررسی درخواست‌ها"
+      },
+      "charts": {
+        "registrationsTitle": "روند ثبت‌نام کاربران",
+        "registrationsSubtitle": "هفت روز گذشته",
+        "registrationLabel": "ثبت‌نام",
+        "ratioTitle": "ترکیب کاربران",
+        "ratioSubtitle": "نسبت زبان‌آموزان به مدرسان",
+        "students": "زبان‌آموز",
+        "instructors": "مدرس"
+      },
+      "timeline": {
+        "title": "لاگ فعالیت‌ها",
+        "subtitle": "پنج اقدام تازه روی پلتفرم",
+        "userRegistered": "ثبت‌نام کاربر تازه",
+        "instructorApproved": "تایید مدرس",
+        "empty": "فعالیتی برای نمایش وجود ندارد."
+      },
+      "health": {
+        "title": "وضعیت سیستم",
+        "server": "وضعیت سرور",
+        "database": "پایگاه داده",
+        "api": "وضعیت API",
+        "online": "آنلاین",
+        "connected": "متصل",
+        "healthy": "سالم",
+        "degraded": "مختل"
       }
     },
     "student": {
