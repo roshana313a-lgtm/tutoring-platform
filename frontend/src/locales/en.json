@@ -1,0 +1,348 @@
+{
+  "app": {
+    "name": "Online Learning Institute",
+    "monogram": "آ"
+  },
+  "common": {
+    "loading": "Loading…",
+    "refreshing": "Refreshing…",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "viewAll": "View all",
+    "cancel": "Cancel",
+    "all": "All",
+    "or": "or",
+    "notSet": "Not set",
+    "emptyValue": "—",
+    "currency": "Toman",
+    "perHour": "Toman / hour",
+    "negotiable": "Negotiable"
+  },
+  "roles": {
+    "admin": "Admin",
+    "instructor": "Instructor",
+    "student": "Student"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "instructorSearch": "Find an instructor",
+    "myClasses": "My classes",
+    "myHomework": "My homework",
+    "myProgress": "My progress",
+    "myProfile": "My profile",
+    "students": "My students",
+    "submitHomework": "Submit homework",
+    "evaluations": "Evaluations",
+    "manageInstructors": "Manage instructors",
+    "manageUsers": "Manage users",
+    "quality": "Service quality",
+    "settings": "Settings",
+    "support": "Support",
+    "titles": {
+      "student": "Student dashboard",
+      "instructor": "Instructor dashboard",
+      "admin": "Admin dashboard",
+      "instructorSearch": "Find an instructor",
+      "classes": "My classes",
+      "homework": "My homework",
+      "progress": "My progress",
+      "students": "My students",
+      "homeworkNew": "Submit homework",
+      "evaluations": "Evaluations",
+      "manageInstructors": "Manage instructors",
+      "users": "Manage users",
+      "quality": "Service quality",
+      "settings": "Settings",
+      "profile": "My profile"
+    }
+  },
+  "layout": {
+    "brand": "Online Learning Institute",
+    "panel": "{role} panel",
+    "menuAria": "Dashboard menu",
+    "searchPlaceholder": "Quick search...",
+    "searchAria": "Global search",
+    "settingsAria": "Settings",
+    "notificationsAria": "Notifications",
+    "logout": "Sign out",
+    "defaultTitle": "Dashboard",
+    "languageAria": "Choose language",
+    "languages": {
+      "fa": "فارسی",
+      "en": "English"
+    }
+  },
+  "auth": {
+    "loginSubtitle": "Sign in to your account",
+    "registerSubtitle": "Create your account",
+    "tabsAria": "Authentication tabs",
+    "loginTab": "Sign in",
+    "registerTab": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "remember": "Remember me",
+    "forgot": "Forgot your password?",
+    "loginSubmitting": "Signing in…",
+    "registerSubmitting": "Signing up…",
+    "loginSuccess": "Signed in. Redirecting...",
+    "registerSuccess": "Account created. Redirecting to the sign-in page...",
+    "loginWithGoogle": "Sign in with Google",
+    "loginWithApple": "Sign in with Apple",
+    "registerWithGoogle": "Sign up with Google",
+    "registerWithApple": "Sign up with Apple",
+    "noAccount": "Don't have an account?",
+    "goRegister": "Create one",
+    "haveAccount": "Already have an account?",
+    "goLogin": "Sign in",
+    "accountType": "Account type",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "dismissBanner": "Dismiss message"
+  },
+  "validation": {
+    "email": "Enter a valid email address",
+    "passwordMin": "Password must be at least 8 characters",
+    "roleRequired": "Select Student or Instructor",
+    "fullNameRequired": "Please enter your full name",
+    "fullNameMax": "Name cannot be longer than 255 characters",
+    "phoneMax": "Phone number cannot be longer than 50 characters",
+    "levelInvalid": "Invalid language level",
+    "goalMax": "Learning goal cannot be longer than 1000 characters",
+    "hourlyRateInteger": "Hourly rate must be a whole number",
+    "hourlyRateMin": "Hourly rate cannot be negative",
+    "languagesMax": "You can select at most 20 languages",
+    "summaryMax": "The summary cannot be longer than 200 characters",
+    "platformName": "Enter the platform name",
+    "defaultRate": "The default rate must be a non-negative number",
+    "supportEmail": "Enter a valid support email"
+  },
+  "errors": {
+    "unknown": "Something went wrong. Please try again.",
+    "unauthorized": "Incorrect email or password.",
+    "conflict": "This email is already registered. Sign in or use another email.",
+    "invalid": "The submitted details are not valid. Please review every field.",
+    "network": "Could not reach the server. Please try again.",
+    "stats": "Could not load the dashboard statistics.",
+    "instructors": "Could not load the instructor list.",
+    "users": "Could not load the user list.",
+    "recentUsers": "Could not load the latest users.",
+    "quality": "Could not load the service quality metrics.",
+    "settingsLoad": "Could not load the settings.",
+    "settingsSave": "Saving the settings failed. Please try again.",
+    "profileSave": "Could not save the profile details",
+    "avatarUpload": "The image upload failed. Please try again.",
+    "action": "This action failed. Please try again.",
+    "userToggle": "Could not change the user status. Please try again.",
+    "formErrors": "Please fix the form errors."
+  },
+  "dashboard": {
+    "welcome": "Welcome, {name}",
+    "loading": "Loading…",
+    "admin": {
+      "eyebrow": "Admin view",
+      "subtitle": "Live statistics for the institute's users and instructors",
+      "accessBadge": "Full admin access",
+      "statsLoading": "Refreshing the statistics…",
+      "stats": {
+        "users": "Active users",
+        "usersHint": "All registered accounts",
+        "pending": "Instructors awaiting approval",
+        "pendingHint": "Requests not reviewed yet",
+        "pendingCta": "Review requests",
+        "classes": "Active classes",
+        "classesHint": "Sessions in progress"
+      },
+      "quickActions": {
+        "title": "Quick actions",
+        "subtitle": "The tasks admins repeat most",
+        "approve": "Approve new instructors",
+        "approveHint": "Review instructor sign-up requests",
+        "users": "Manage users",
+        "usersHint": "Students and instructors, access status",
+        "settings": "Platform settings",
+        "settingsHint": "General institute and display settings"
+      },
+      "recent": {
+        "title": "Recent activity",
+        "subtitle": "The five newest accounts on the platform",
+        "empty": "No users have registered yet.",
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "joined": "Joined"
+      }
+    },
+    "student": {
+      "eyebrow": "Student view",
+      "subtitle": "Classes, homework and the institute's approved instructors",
+      "cards": {
+        "upcoming": "Upcoming classes",
+        "upcomingHint": "Sessions in the next seven days",
+        "homework": "Homework due",
+        "homeworkHint": "Assignments waiting to be submitted",
+        "grade": "Average grade",
+        "gradeHint": "Your average grade",
+        "noGrade": "No grade recorded yet"
+      },
+      "instructors": {
+        "title": "Suggested instructors",
+        "subtitle": "Approved and active instructors of the institute",
+        "search": "Find an instructor",
+        "viewProfile": "View profile",
+        "noLanguage": "No teaching language recorded",
+        "empty": "There is no approved instructor to show yet. Once an admin approves instructors they will appear here."
+      }
+    },
+    "instructor": {
+      "eyebrow": "Instructor view",
+      "subtitle": "Today's schedule and the status of your assignments",
+      "approvalTitle": "Your account is waiting for admin approval",
+      "approvalText": "An admin has not approved your profile yet. Until then you are not shown in search results.",
+      "cards": {
+        "today": "Today's classes",
+        "todayHint": "Scheduled sessions",
+        "grading": "Awaiting grading",
+        "gradingHint": "Submitted assignments",
+        "students": "My students",
+        "studentsHint": "Students working with you"
+      },
+      "bookings": {
+        "title": "Booking requests",
+        "subtitle": "New bookings waiting for your reply",
+        "viewClasses": "View classes",
+        "empty": "There are no booking requests yet. New requests will appear here once class booking is enabled."
+      }
+    }
+  },
+  "profile": {
+    "eyebrow": "Account settings",
+    "title": "My profile",
+    "subtitleStudent": "Keep your personal and learning details up to date.",
+    "subtitleInstructor": "Keep your personal and professional details up to date.",
+    "subtitleOther": "Keep your personal account details up to date.",
+    "general": "General information",
+    "generalHint": "These details are shown for every role.",
+    "avatarAlt": "Profile photo preview",
+    "avatar": "Profile photo",
+    "avatarUploading": "Uploading…",
+    "avatarHint": "PNG, JPG, WebP or GIF — up to 2 MB",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "e.g. Sara Karimi",
+    "phone": "Phone number",
+    "phonePlaceholder": "e.g. 09121234567",
+    "learning": "Learning details",
+    "learningHint": "These fields belong to student accounts.",
+    "level": "Language level",
+    "goal": "Learning goal",
+    "goalPlaceholder": "e.g. Preparing for IELTS",
+    "teaching": "Instructor details",
+    "teachingHint": "These fields belong to instructor accounts.",
+    "hourlyRate": "Hourly rate (Toman)",
+    "hourlyRatePlaceholder": "e.g. 250000",
+    "languages": "Teaching languages",
+    "summary": "Resume summary",
+    "summaryPlaceholder": "A short introduction about yourself (max 200 characters)",
+    "saved": "Your profile was saved.",
+    "levels": {
+      "beginner": "Beginner",
+      "pre-intermediate": "Pre-intermediate",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "languageOptions": {
+      "english": "English",
+      "german": "German",
+      "french": "French",
+      "arabic": "Arabic",
+      "turkish": "Turkish",
+      "spanish": "Spanish",
+      "italian": "Italian"
+    }
+  },
+  "admin": {
+    "instructors": {
+      "eyebrow": "Instructor management",
+      "title": "All instructors",
+      "subtitle": "Approve, reject and suspend institute instructor accounts",
+      "count": "{count} instructors",
+      "filters": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "suspended": "Suspended"
+      },
+      "emptyAll": "No instructor has signed up yet.",
+      "emptyFiltered": "No instructor has this status.",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "status": "Status",
+        "rate": "Hourly rate",
+        "actions": "Actions"
+      },
+      "rateUnset": "Not set",
+      "approve": "Approve",
+      "reject": "Reject",
+      "suspend": "Suspend",
+      "activate": "Reactivate",
+      "confirmReject": "Confirm rejection",
+      "approvedMessage": "{name}'s account was approved.",
+      "rejectedMessage": "{name}'s request was rejected.",
+      "suspendedMessage": "{name}'s account was suspended.",
+      "activatedMessage": "{name}'s access was restored.",
+      "filtersAria": "Filter instructors by status"
+    },
+    "users": {
+      "eyebrow": "User management",
+      "title": "Platform users",
+      "subtitle": "Students and instructors of the institute",
+      "count": "{count} users",
+      "empty": "No user has registered yet.",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "statusSuspended": "Suspended",
+      "statusActive": "Active",
+      "suspend": "Suspend",
+      "activate": "Reactivate",
+      "suspendedMessage": "{name}'s account was suspended.",
+      "activatedMessage": "{name}'s access was restored."
+    },
+    "quality": {
+      "eyebrow": "Service quality",
+      "title": "Quality metrics",
+      "subtitle": "Measured values stored in the database",
+      "classCount": "{count} classes",
+      "metrics": {
+        "classes": "Classes held",
+        "classesHint": "Based on class records",
+        "rating": "Average satisfaction",
+        "ratingHint": "Average student rating",
+        "noRating": "No rating recorded yet",
+        "ratingValue": "{value} out of 5",
+        "suspended": "Suspended users",
+        "suspendedHint": "Accounts blocked by an admin"
+      },
+      "note": "Classes and satisfaction scores are calculated here once the classes and evaluations modules are enabled; until then a zero means the database has no records."
+    },
+    "settings": {
+      "eyebrow": "Platform settings",
+      "title": "Settings",
+      "subtitle": "General institute configuration",
+      "platformName": "Platform name",
+      "defaultRate": "Default hourly rate (Toman)",
+      "supportEmail": "Support email",
+      "saved": "Settings saved.",
+      "submit": "Save settings"
+    }
+  },
+  "placeholder": {
+    "fallback": "This section",
+    "body": "This section is under construction and will be available soon."
+  }
+}

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useField, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
@@ -11,6 +12,7 @@ import { resolveMediaUrl } from '../../../shared/api/media'
 import { uploadAvatar } from '../api/avatar'
 
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const role = computed(() => auth.user?.role ?? 'student')
 const isStudent = computed(() => role.value === 'student')
@@ -19,20 +21,21 @@ const isInstructor = computed(() => role.value === 'instructor')
 const MAX_SUMMARY = 200
 
 const LEVEL_OPTIONS = [
-  { value: 'beginner', label: 'مبتدی' },
-  { value: 'pre-intermediate', label: 'پیش‌متوسط' },
-  { value: 'intermediate', label: 'متوسط' },
-  { value: 'advanced', label: 'پیشرفته' },
+  { value: 'beginner', labelKey: 'profile.levels.beginner' },
+  { value: 'pre-intermediate', labelKey: 'profile.levels.pre-intermediate' },
+  { value: 'intermediate', labelKey: 'profile.levels.intermediate' },
+  { value: 'advanced', labelKey: 'profile.levels.advanced' },
 ]
 
+// The stored value stays a stable identifier; only the label is translated.
 const LANGUAGE_OPTIONS = [
-  'انگلیسی',
-  'آلمانی',
-  'فرانسوی',
-  'عربی',
-  'ترکی استانبولی',
-  'اسپانیایی',
-  'ایتالیایی',
+  { value: 'انگلیسی', labelKey: 'profile.languageOptions.english' },
+  { value: 'آلمانی', labelKey: 'profile.languageOptions.german' },
+  { value: 'فرانسوی', labelKey: 'profile.languageOptions.french' },
+  { value: 'عربی', labelKey: 'profile.languageOptions.arabic' },
+  { value: 'ترکی استانبولی', labelKey: 'profile.languageOptions.turkish' },
+  { value: 'اسپانیایی', labelKey: 'profile.languageOptions.spanish' },
+  { value: 'ایتالیایی', labelKey: 'profile.languageOptions.italian' },
 ]
 
 // One static schema keeps validation stable across role switches; the role only
@@ -41,19 +44,19 @@ const profileSchema = z.object({
   full_name: z
     .string()
     .trim()
-    .min(1, 'لطفاً نام و نام خانوادگی خود را وارد کنید')
-    .max(255, 'نام نمی‌تواند بیشتر از ۲۵۵ کاراکتر باشد'),
-  phone_number: z.string().trim().max(50, 'شماره تماس نمی‌تواند بیشتر از ۵۰ کاراکتر باشد'),
-  current_level: z.string().max(64, 'سطح زبان معتبر نیست'),
-  learning_goal: z.string().max(1000, 'هدف یادگیری نمی‌تواند بیشتر از ۱۰۰۰ کاراکتر باشد'),
+    .min(1, t('validation.fullNameRequired'))
+    .max(255, t('validation.fullNameMax')),
+  phone_number: z.string().trim().max(50, t('validation.phoneMax')),
+  current_level: z.string().max(64, t('validation.levelInvalid')),
+  learning_goal: z.string().max(1000, t('validation.goalMax')),
   hourly_rate: z.coerce
     .number()
-    .int('قیمت هر ساعت باید عدد صحیح باشد')
-    .min(0, 'قیمت هر ساعت نمی‌تواند منفی باشد'),
-  teaching_languages: z.array(z.string()).max(20, 'حداکثر ۲۰ زبان قابل انتخاب است'),
+    .int(t('validation.hourlyRateInteger'))
+    .min(0, t('validation.hourlyRateMin')),
+  teaching_languages: z.array(z.string()).max(20, t('validation.languagesMax')),
   short_summary: z
     .string()
-    .max(MAX_SUMMARY, 'خلاصه رزومه نمی‌تواند بیشتر از ۲۰۰ کاراکتر باشد'),
+    .max(MAX_SUMMARY, t('validation.summaryMax')),
 })
 
 function initialValues() {
@@ -129,7 +132,7 @@ async function onAvatarSelected(event: Event): Promise<void> {
     // without waiting for the form to be submitted.
     auth.setAvatar(uploadedUrl)
   } catch {
-    avatarError.value = 'آپلود تصویر ناموفق بود. دوباره تلاش کنید.'
+    avatarError.value = t('errors.avatarUpload')
     releasePreviewObjectUrl()
     avatarPreview.value = resolveMediaUrl(avatarUrl.value)
   } finally {
@@ -146,6 +149,14 @@ watch(
     avatarUrl.value = user.avatar_url ?? ''
     avatarPreview.value = resolveMediaUrl(user.avatar_url)
   },
+)
+
+const subtitle = computed(() =>
+  isStudent.value
+    ? t('profile.subtitleStudent')
+    : isInstructor.value
+      ? t('profile.subtitleInstructor')
+      : t('profile.subtitleOther'),
 )
 
 const onSubmit = handleSubmit(async (values) => {
@@ -172,9 +183,9 @@ const onSubmit = handleSubmit(async (values) => {
 
   try {
     await auth.updateProfile(payload)
-    successMessage.value = 'اطلاعات پروفایل با موفقیت ذخیره شد.'
+    successMessage.value = t('profile.saved')
   } catch {
-    formError.value = 'خطا در ذخیره اطلاعات پروفایل'
+    formError.value = t('errors.profileSave')
   } finally {
     submitting.value = false
   }
@@ -185,17 +196,11 @@ const onSubmit = handleSubmit(async (values) => {
   <section class="profile-page" data-test="profile-page">
     <header class="profile-header">
       <div>
-        <p class="eyebrow">تنظیمات حساب</p>
-        <h2>پروفایل من</h2>
-        <p class="subtitle">
-          اطلاعات شخصی و
-          <template v-if="isStudent">آموزشی</template>
-          <template v-else-if="isInstructor">حرفه‌ای</template>
-          <template v-else>حساب</template>
-          خود را تکمیل و به‌روز کنید.
-        </p>
+        <p class="eyebrow">{{ t('profile.eyebrow') }}</p>
+        <h2>{{ t('profile.title') }}</h2>
+        <p class="subtitle">{{ subtitle }}</p>
       </div>
-      <span class="role-chip">{{ auth.user?.role }}</span>
+      <span class="role-chip">{{ auth.user?.role ? t(`roles.${auth.user.role}`) : '—' }}</span>
     </header>
 
     <form class="profile-card" data-test="profile-form" @submit="onSubmit">
@@ -204,8 +209,8 @@ const onSubmit = handleSubmit(async (values) => {
       <div v-if="formError" class="form-banner" role="alert">{{ formError }}</div>
 
       <div class="section-title">
-        <h3>اطلاعات عمومی</h3>
-        <p>این اطلاعات برای همه نقش‌ها نمایش داده می‌شود.</p>
+        <h3>{{ t('profile.general') }}</h3>
+        <p>{{ t('profile.generalHint') }}</p>
       </div>
 
       <div class="avatar-row">
@@ -214,13 +219,13 @@ const onSubmit = handleSubmit(async (values) => {
             v-if="avatarPreview"
             data-test="avatar-preview"
             :src="avatarPreview"
-            alt="پیش‌نمایش عکس پروفایل"
+            :alt="t('profile.avatarAlt')"
           />
           <span v-else class="avatar-placeholder" aria-hidden="true">؟</span>
         </span>
 
         <label class="avatar-control">
-          <span class="field-label">عکس پروفایل</span>
+          <span class="field-label">{{ t('profile.avatar') }}</span>
           <input
             data-test="avatar-upload"
             type="file"
@@ -229,7 +234,7 @@ const onSubmit = handleSubmit(async (values) => {
             @change="onAvatarSelected"
           />
           <span class="upload-hint">
-            {{ avatarUploading ? 'در حال آپلود…' : 'فرمت‌های PNG، JPG، WebP یا GIF — حداکثر ۲ مگابایت' }}
+            {{ avatarUploading ? t('profile.avatarUploading') : t('profile.avatarHint') }}
           </span>
           <span v-if="avatarError" class="field-error" data-test="avatar-error" role="alert">
             {{ avatarError }}
@@ -239,52 +244,52 @@ const onSubmit = handleSubmit(async (values) => {
 
       <div class="field-grid">
         <label class="field">
-          <span class="field-label">نام و نام خانوادگی</span>
+          <span class="field-label">{{ t('profile.fullName') }}</span>
           <input
             v-model="fullName"
             data-test="full-name"
             type="text"
             autocomplete="name"
-            placeholder="مثال: علی احمدی"
+            :placeholder="t('profile.fullNamePlaceholder')"
           />
           <span v-if="fullNameError" class="field-error" role="alert">{{ fullNameError }}</span>
         </label>
 
         <label class="field">
-          <span class="field-label">شماره تماس</span>
+          <span class="field-label">{{ t('profile.phone') }}</span>
           <input
             v-model="phoneNumber"
             data-test="phone"
             type="tel"
             autocomplete="tel"
-            placeholder="مثال: ۰۹۱۲۱۲۳۴۵۶۷"
+            :placeholder="t('profile.phonePlaceholder')"
           />
         </label>
       </div>
 
       <template v-if="isStudent">
         <div class="section-title" data-test="student-section">
-          <h3>اطلاعات یادگیری</h3>
-          <p>این فیلدها مخصوص حساب‌های زبان‌آموز است.</p>
+          <h3>{{ t('profile.learning') }}</h3>
+          <p>{{ t('profile.learningHint') }}</p>
         </div>
 
         <div class="field-grid">
           <label class="field">
-            <span class="field-label">سطح زبان</span>
+            <span class="field-label">{{ t('profile.level') }}</span>
             <select v-model="currentLevel" data-test="current-level">
               <option v-for="level in LEVEL_OPTIONS" :key="level.value" :value="level.value">
-                {{ level.label }}
+                {{ t(level.labelKey) }}
               </option>
             </select>
           </label>
 
           <label class="field">
-            <span class="field-label">هدف یادگیری</span>
+            <span class="field-label">{{ t('profile.goal') }}</span>
             <input
               v-model="learningGoal"
               data-test="learning-goal"
               type="text"
-              placeholder="مثال: آماده‌سازی برای آیلتس"
+              :placeholder="t('profile.goalPlaceholder')"
             />
           </label>
         </div>
@@ -292,20 +297,20 @@ const onSubmit = handleSubmit(async (values) => {
 
       <template v-else-if="isInstructor">
         <div class="section-title" data-test="instructor-section">
-          <h3>اطلاعات مدرس</h3>
-          <p>این فیلدها مخصوص حساب‌های مدرس است.</p>
+          <h3>{{ t('profile.teaching') }}</h3>
+          <p>{{ t('profile.teachingHint') }}</p>
         </div>
 
         <div class="field-grid">
           <label class="field">
-            <span class="field-label">قیمت هر ساعت (تومان)</span>
+            <span class="field-label">{{ t('profile.hourlyRate') }}</span>
             <input
               v-model="hourlyRate"
               data-test="hourly-rate"
               type="number"
               min="0"
               step="1000"
-              placeholder="مثال: ۲۵۰۰۰۰"
+              :placeholder="t('profile.hourlyRatePlaceholder')"
             />
             <span v-if="hourlyRateError" class="field-error" role="alert">
               {{ hourlyRateError }}
@@ -314,28 +319,28 @@ const onSubmit = handleSubmit(async (values) => {
         </div>
 
         <div class="field">
-          <span class="field-label">زبان‌های تدریس</span>
+          <span class="field-label">{{ t('profile.languages') }}</span>
           <div class="chip-group" data-test="teaching-languages">
-            <label v-for="language in LANGUAGE_OPTIONS" :key="language" class="chip">
+            <label v-for="language in LANGUAGE_OPTIONS" :key="language.value" class="chip">
               <input
                 v-model="teachingLanguages"
                 data-test="language-option"
                 type="checkbox"
-                :value="language"
+                :value="language.value"
               />
-              <span>{{ language }}</span>
+              <span>{{ t(language.labelKey) }}</span>
             </label>
           </div>
         </div>
 
         <label class="field">
-          <span class="field-label">خلاصه رزومه</span>
+          <span class="field-label">{{ t('profile.summary') }}</span>
           <textarea
             v-model="shortSummary"
             data-test="short-summary"
             rows="3"
             :maxlength="MAX_SUMMARY"
-            placeholder="معرفی کوتاه از خودتان (حداکثر ۲۰۰ کاراکتر)"
+            :placeholder="t('profile.summaryPlaceholder')"
           ></textarea>
           <span class="field-hint" data-test="summary-counter">
             {{ summaryLength }} / {{ MAX_SUMMARY }}
@@ -346,7 +351,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <div class="form-actions">
         <button type="submit" class="save-button" data-test="submit" :disabled="submitting">
-          {{ submitting ? 'در حال ذخیره…' : 'ذخیره اطلاعات' }}
+          {{ submitting ? t('common.saving') : t('common.save') }}
         </button>
       </div>
     </form>

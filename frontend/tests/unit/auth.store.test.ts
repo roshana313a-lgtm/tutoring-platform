@@ -1,16 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../src/features/auth/api/auth', () => ({
-  register: vi.fn(),
-  login: vi.fn(),
-  fetchCurrentUser: vi.fn(),
-  updateProfile: vi.fn(),
-}))
-
-import { fetchCurrentUser, login, register, updateProfile } from '../../src/features/auth/api/auth'
 import { useAuthStore } from '../../src/features/auth/stores/useAuthStore'
-import { clearStoredToken, getStoredToken } from '../../src/shared/api/http'
+import { clearStoredToken, getStoredToken, http } from '../../src/shared/api/http'
 
 const user = {
   id: '22222222-2222-4222-8222-222222222222',
@@ -19,18 +11,21 @@ const user = {
   created_at: '2026-11-21T10:00:00Z',
 }
 
+// The auth API is a thin wrapper over `http`, so stubbing the client exercises the
+// same store code without depending on module-mock interop.
 beforeEach(() => {
   setActivePinia(createPinia())
   clearStoredToken()
-  vi.mocked(register).mockReset()
-  vi.mocked(login).mockReset()
-  vi.mocked(fetchCurrentUser).mockReset()
-  vi.mocked(updateProfile).mockReset()
+  vi.restoreAllMocks()
 })
 
 describe('useAuthStore', () => {
   it('stores token and user after registration', async () => {
-    vi.mocked(register).mockResolvedValue({ token: 'register-token', user })
+    vi.spyOn(http, 'post').mockResolvedValue({
+      user,
+      access_token: 'register-token',
+      token_type: 'bearer',
+    })
 
     const store = useAuthStore()
     await store.register({
@@ -46,7 +41,11 @@ describe('useAuthStore', () => {
   })
 
   it('stores token and user after login', async () => {
-    vi.mocked(login).mockResolvedValue({ token: 'login-token', user })
+    vi.spyOn(http, 'post').mockResolvedValue({
+      user,
+      access_token: 'login-token',
+      token_type: 'bearer',
+    })
 
     const store = useAuthStore()
     await store.login({ email: user.email, password: 'longenough' })
@@ -58,7 +57,11 @@ describe('useAuthStore', () => {
   })
 
   it('clears token and user on logout', async () => {
-    vi.mocked(login).mockResolvedValue({ token: 'login-token', user })
+    vi.spyOn(http, 'post').mockResolvedValue({
+      user,
+      access_token: 'login-token',
+      token_type: 'bearer',
+    })
 
     const store = useAuthStore()
     await store.login({ email: user.email, password: 'longenough' })
@@ -71,14 +74,14 @@ describe('useAuthStore', () => {
   })
 
   it('hydrates the user on boot when a token is stored', async () => {
-    vi.mocked(fetchCurrentUser).mockResolvedValue(user)
+    vi.spyOn(http, 'get').mockResolvedValue(user)
     const { setStoredToken } = await import('../../src/shared/api/http')
     setStoredToken('existing-token')
 
     const store = useAuthStore()
     await store.hydrate()
 
-    expect(fetchCurrentUser).toHaveBeenCalledOnce()
+    expect(http.get).toHaveBeenCalledTimes(1)
     expect(store.user).toEqual(user)
     expect(store.token).toBe('existing-token')
     expect(store.isAuthenticated).toBe(true)

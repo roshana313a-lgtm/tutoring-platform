@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import FormError from './FormError.vue'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -47,7 +50,7 @@ const resolvedType = computed(() =>
         v-if="type === 'password'"
         type="button"
         class="eye-button"
-        :aria-label="showPassword ? 'پنهان کردن رمز عبور' : 'نمایش رمز عبور'"
+        :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
         @click="showPassword = !showPassword"
       >
         <svg

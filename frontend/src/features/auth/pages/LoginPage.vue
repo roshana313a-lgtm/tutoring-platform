@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useField, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useRouter } from 'vue-router'
@@ -13,9 +14,11 @@ import { useAuthStore } from '../stores/useAuthStore'
 import { authErrorMessage } from '../utils/authErrorMessage'
 import { dashboardLocation } from '../../dashboard/roleDashboard'
 
+const { t } = useI18n()
+
 const loginSchema = z.object({
-  email: z.string().email('Enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z.string().email(t('validation.email')),
+  password: z.string().min(8, t('validation.passwordMin')),
 })
 
 const { handleSubmit, setFieldError } = useForm({
@@ -38,11 +41,11 @@ const onSubmit = handleSubmit(async (values) => {
 
   try {
     await auth.login(values)
-    successMessage.value = 'ورود موفق. در حال انتقال...'
+    successMessage.value = t('auth.loginSuccess')
     await new Promise((resolve) => setTimeout(resolve, 1000))
     await router.push(dashboardLocation(auth.user?.role))
   } catch (error) {
-    formError.value = authErrorMessage(error)
+    formError.value = t(authErrorMessage(error))
     if (error instanceof ApiError && error.status === 422) {
       setFieldError('email', formError.value)
     }
@@ -55,14 +58,16 @@ const onSubmit = handleSubmit(async (values) => {
   <main class="auth-page">
     <form class="auth-card" @submit="onSubmit">
       <header class="card-header">
-        <div class="monogram" aria-hidden="true">آ</div>
-        <h1>مؤسسه آموزش آنلاین</h1>
-        <p class="subtitle">ورود به حساب کاربری</p>
+        <div class="monogram" aria-hidden="true">{{ t('app.monogram') }}</div>
+        <h1>{{ t('app.name') }}</h1>
+        <p class="subtitle">{{ t('auth.loginSubtitle') }}</p>
       </header>
 
-      <nav class="auth-tabs" aria-label="تب های احراز هویت">
-        <RouterLink to="/login" class="tab active" aria-current="page">ورود</RouterLink>
-        <RouterLink to="/register" class="tab">ثبت نام</RouterLink>
+      <nav class="auth-tabs" :aria-label="t('auth.tabsAria')">
+        <RouterLink to="/login" class="tab active" aria-current="page">
+          {{ t('auth.loginTab') }}
+        </RouterLink>
+        <RouterLink to="/register" class="tab">{{ t('auth.registerTab') }}</RouterLink>
       </nav>
 
       <BaseBanner
@@ -81,7 +86,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <BaseInput
         v-model="email"
-        label="ایمیل"
+        :label="t('auth.email')"
         name="email"
         type="email"
         autocomplete="email"
@@ -90,7 +95,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <BaseInput
         v-model="password"
-        label="رمز عبور"
+        :label="t('auth.password')"
         name="password"
         type="password"
         autocomplete="current-password"
@@ -100,19 +105,19 @@ const onSubmit = handleSubmit(async (values) => {
       <div class="form-options">
         <label class="checkbox-row">
           <input v-model="rememberMe" type="checkbox" />
-          <span>مرا به خاطر بسپار</span>
+          <span>{{ t('auth.remember') }}</span>
         </label>
-        <span class="text-link">فراموشی رمز عبور؟</span>
+        <span class="text-link">{{ t('auth.forgot') }}</span>
       </div>
 
       <BaseButton type="submit" :loading="submitting">
-        {{ submitting ? 'در حال ورود…' : 'ورود' }}
+        {{ submitting ? t('auth.loginSubmitting') : t('auth.loginTab') }}
       </BaseButton>
 
-      <div class="divider"><span>یا</span></div>
+      <div class="divider"><span>{{ t('common.or') }}</span></div>
 
       <div class="social-buttons">
-        <button type="button" class="social-button" aria-label="ورود با Google">
+        <button type="button" class="social-button" :aria-label="t('auth.loginWithGoogle')">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path
               fill="#4285F4"
@@ -134,7 +139,7 @@ const onSubmit = handleSubmit(async (values) => {
           <span>Google</span>
         </button>
 
-        <button type="button" class="social-button" aria-label="ورود با Apple">
+        <button type="button" class="social-button" :aria-label="t('auth.loginWithApple')">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path
               fill="currentColor"
@@ -146,8 +151,8 @@ const onSubmit = handleSubmit(async (values) => {
       </div>
 
       <p class="auth-link">
-        <span>حساب ندارید؟</span>
-        <RouterLink to="/register">ثبت نام کنید</RouterLink>
+        <span>{{ t('auth.noAccount') }}</span>
+        <RouterLink to="/register">{{ t('auth.goRegister') }}</RouterLink>
       </p>
     </form>
   </main>

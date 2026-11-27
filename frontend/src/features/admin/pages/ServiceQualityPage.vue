@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { CalendarDays, LoaderCircle, ShieldBan, Star } from 'lucide-vue-next'
 
+import { formatNumber } from '../../../i18n/format'
 import { fetchServiceQuality, type ServiceQuality } from '../api/quality'
+
+const { t, locale } = useI18n()
 
 const quality = ref<ServiceQuality | null>(null)
 const loading = ref(true)
 const loadError = ref('')
-
-const formatter = new Intl.NumberFormat('fa-IR')
 
 const metrics = computed(() => {
   const hasRatings = (quality.value?.average_rating ?? 0) > 0
@@ -16,27 +18,29 @@ const metrics = computed(() => {
   return [
     {
       key: 'classes' as const,
-      title: 'کلاس‌های برگزارشده',
-      value: quality.value ? formatter.format(quality.value.total_classes) : '—',
-      hint: 'بر اساس رکوردهای کلاس',
+      title: t('admin.quality.metrics.classes'),
+      value: quality.value ? formatNumber(quality.value.total_classes, locale.value) : '—',
+      hint: t('admin.quality.metrics.classesHint'),
       icon: CalendarDays,
     },
     {
       key: 'rating' as const,
-      title: 'میانگین رضایت',
+      title: t('admin.quality.metrics.rating'),
       value: quality.value
         ? hasRatings
-          ? `${(quality.value.average_rating as number).toFixed(1)} از ۵`
+          ? t('admin.quality.metrics.ratingValue', {
+              value: (quality.value.average_rating as number).toFixed(1),
+            })
           : '—'
         : '—',
-      hint: hasRatings ? 'میانگین امتیاز زبان‌آموزان' : 'هنوز امتیازی ثبت نشده',
+      hint: hasRatings ? t('admin.quality.metrics.ratingHint') : t('admin.quality.metrics.noRating'),
       icon: Star,
     },
     {
       key: 'suspended' as const,
-      title: 'کاربران معلق',
-      value: quality.value ? formatter.format(quality.value.suspended_users) : '—',
-      hint: 'حساب‌های مسدودشده توسط مدیر',
+      title: t('admin.quality.metrics.suspended'),
+      value: quality.value ? formatNumber(quality.value.suspended_users, locale.value) : '—',
+      hint: t('admin.quality.metrics.suspendedHint'),
       icon: ShieldBan,
     },
   ]
@@ -49,7 +53,7 @@ async function load(): Promise<void> {
   try {
     quality.value = await fetchServiceQuality()
   } catch {
-    loadError.value = 'دریافت شاخص‌های کیفیت ناموفق بود.'
+    loadError.value = t('errors.quality')
   } finally {
     loading.value = false
   }
@@ -62,12 +66,12 @@ onMounted(load)
   <section class="quality-page" data-test="quality-page">
     <header class="page-header">
       <div>
-        <p class="eyebrow">کیفیت خدمات</p>
-        <h2>شاخص‌های کیفیت</h2>
-        <p class="subtitle">سنجه‌های واقعی ثبت‌شده در پایگاه داده</p>
+        <p class="eyebrow">{{ t('admin.quality.eyebrow') }}</p>
+        <h2>{{ t('admin.quality.title') }}</h2>
+        <p class="subtitle">{{ t('admin.quality.subtitle') }}</p>
       </div>
       <span class="counter" data-test="quality-counter">
-        {{ quality ? formatter.format(quality.total_classes) : '—' }} کلاس
+        {{ t('admin.quality.classCount', { count: quality ? formatNumber(quality.total_classes, locale) : '—' }) }}
       </span>
     </header>
 
@@ -84,11 +88,12 @@ onMounted(load)
       </article>
     </div>
 
-    <p v-if="loading" class="loading-note" data-test="quality-loading">در حال بروزرسانی…</p>
+    <p v-if="loading" class="loading-note" data-test="quality-loading">
+      {{ t('common.refreshing') }}
+    </p>
 
     <p class="note" data-test="quality-note">
-      کلاس‌ها و امتیازهای رضایت پس از فعال شدن ماژول کلاس‌ها و ارزیابی‌ها در این بخش محاسبه
-      می‌شوند؛ تا آن زمان مقدار صفر یعنی هیچ رکوردی در پایگاه داده وجود ندارد.
+      {{ t('admin.quality.note') }}
     </p>
   </section>
 </template>

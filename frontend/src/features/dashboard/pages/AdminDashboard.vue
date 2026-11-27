@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, type Component } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import {
   BookOpen,
@@ -17,6 +18,7 @@ import type { User } from '../../auth/api/auth'
 import { useAuthStore } from '../../auth/stores/useAuthStore'
 import { resolveMediaUrl } from '../../../shared/api/media'
 import { fetchAdminStats, type AdminStats } from '../api/stats'
+import { formatDate, formatNumber, formatToday } from '../../../i18n/format'
 
 interface StatCard {
   key: 'users' | 'pending' | 'classes'
@@ -38,6 +40,7 @@ interface QuickAction {
 const RECENT_LIMIT = 5
 
 const auth = useAuthStore()
+const { t, locale } = useI18n()
 
 const stats = ref<AdminStats | null>(null)
 const loading = ref(true)
@@ -47,79 +50,65 @@ const users = ref<User[]>([])
 const usersLoading = ref(true)
 const usersError = ref('')
 
-const formatter = new Intl.NumberFormat('fa-IR')
-const dateFormatter = new Intl.DateTimeFormat('fa-IR', {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric',
-})
-const todayLabel = new Intl.DateTimeFormat('fa-IR', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-}).format(new Date())
-
-function formatNumber(value: number): string {
-  return formatter.format(value)
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '—' : dateFormatter.format(date)
-}
+const todayLabel = computed(() => formatToday(locale.value))
 
 const cards = computed<StatCard[]>(() => {
-  const value = (count: number | undefined) => (count === undefined ? '—' : formatNumber(count))
+  const value = (count: number | undefined) =>
+    count === undefined ? '—' : formatNumber(count, locale.value)
 
   return [
     {
       key: 'users',
-      title: 'کاربران فعال',
+      title: t('dashboard.admin.stats.users'),
       value: value(stats.value?.total_users),
-      hint: 'همه حساب‌های ثبت‌شده',
+      hint: t('dashboard.admin.stats.usersHint'),
       icon: Users,
     },
     {
       key: 'pending',
-      title: 'مدرسان در انتظار تایید',
+      title: t('dashboard.admin.stats.pending'),
       value: value(stats.value?.pending_instructors),
-      hint: 'درخواست بررسی نشده',
+      hint: t('dashboard.admin.stats.pendingHint'),
       icon: GraduationCap,
       to: { name: 'dashboard-manage-instructors', query: { status: 'pending' } },
     },
     {
       key: 'classes',
-      title: 'کلاس‌های فعال',
+      title: t('dashboard.admin.stats.classes'),
       value: value(stats.value?.active_classes),
-      hint: 'جلسات در حال برگزاری',
+      hint: t('dashboard.admin.stats.classesHint'),
       icon: BookOpen,
     },
   ]
 })
 
-const quickActions: QuickAction[] = [
+const quickActions = computed<QuickAction[]>(() => [
   {
     key: 'approve',
-    label: 'تایید مدرسان جدید',
-    description: 'بررسی درخواست‌های ثبت‌نام مدرسان',
+    label: t('dashboard.admin.quickActions.approve'),
+    description: t('dashboard.admin.quickActions.approveHint'),
     icon: UserCheck,
     to: { name: 'dashboard-manage-instructors', query: { status: 'pending' } },
   },
   {
     key: 'users',
-    label: 'مدیریت کاربران',
-    description: 'زبان‌آموزان و مدرسان، وضعیت دسترسی',
+    label: t('dashboard.admin.quickActions.users'),
+    description: t('dashboard.admin.quickActions.usersHint'),
     icon: Users,
     to: { name: 'dashboard-admin-users' },
   },
   {
     key: 'settings',
-    label: 'تنظیمات پلتفرم',
-    description: 'تنظیمات عمومی مؤسسه و نمایش',
+    label: t('dashboard.admin.quickActions.settings'),
+    description: t('dashboard.admin.quickActions.settingsHint'),
     icon: Settings,
     to: { name: 'dashboard-admin-settings' },
   },
-]
+])
+
+function joinedLabel(value: string): string {
+  return formatDate(value, locale.value)
+}
 
 const recentUsers = computed(() =>
   [...users.value]
@@ -149,14 +138,7 @@ function userInitial(user: User): string {
 }
 
 function roleLabel(role: User['role']): string {
-  switch (role) {
-    case 'admin':
-      return 'مدیر'
-    case 'instructor':
-      return 'مدرس'
-    default:
-      return 'زبان‌آموز'
-  }
+  return role === 'admin' || role === 'instructor' ? t(`roles.${role}`) : t('roles.student')
 }
 
 async function loadStats(): Promise<void> {
@@ -166,7 +148,7 @@ async function loadStats(): Promise<void> {
   try {
     stats.value = await fetchAdminStats()
   } catch {
-    loadError.value = 'دریافت آمار داشبورد ناموفق بود.'
+    loadError.value = t('errors.stats')
   } finally {
     loading.value = false
   }
@@ -179,7 +161,7 @@ async function loadRecentUsers(): Promise<void> {
   try {
     users.value = await fetchUsers()
   } catch {
-    usersError.value = 'دریافت آخرین کاربران ناموفق بود.'
+    usersError.value = t('errors.recentUsers')
   } finally {
     usersLoading.value = false
   }
@@ -200,16 +182,16 @@ onMounted(() => {
           <template v-else>{{ avatarInitial }}</template>
         </span>
         <div class="hero-copy">
-          <p class="hero-eyebrow">نمای مدیر</p>
-          <h2>خوش آمدید، {{ displayName }}</h2>
-          <p class="hero-subtitle">آمار زنده کاربران و مدرسان مؤسسه</p>
+          <p class="hero-eyebrow">{{ t('dashboard.admin.eyebrow') }}</p>
+          <h2>{{ t('dashboard.welcome', { name: displayName }) }}</h2>
+          <p class="hero-subtitle">{{ t('dashboard.admin.subtitle') }}</p>
         </div>
       </div>
 
       <div class="hero-side">
         <span class="hero-badge">
           <ShieldCheck :size="15" />
-          دسترسی کامل مدیر
+          {{ t('dashboard.admin.accessBadge') }}
         </span>
         <span class="hero-date">{{ todayLabel }}</span>
       </div>
@@ -236,20 +218,20 @@ onMounted(() => {
         <strong class="stat-value" data-test="stat-value">{{ card.value }}</strong>
         <span class="stat-hint">{{ card.hint }}</span>
         <span v-if="card.to" class="stat-cta">
-          بررسی درخواست‌ها
+          {{ t('dashboard.admin.stats.pendingCta') }}
           <ChevronLeft :size="14" />
         </span>
       </component>
     </div>
 
     <p v-if="loading" class="loading-note" data-test="admin-stats-loading">
-      در حال بروزرسانی آمار…
+      {{ t('dashboard.admin.statsLoading') }}
     </p>
 
     <section class="section" data-test="quick-actions">
       <div class="section-head">
-        <h3>دسترسی سریع</h3>
-        <p>کارهای پرتکرار مدیر</p>
+        <h3>{{ t('dashboard.admin.quickActions.title') }}</h3>
+        <p>{{ t('dashboard.admin.quickActions.subtitle') }}</p>
       </div>
 
       <div class="action-grid">
@@ -275,22 +257,22 @@ onMounted(() => {
     <section class="panel" data-test="recent-activity">
       <header class="panel-head">
         <div>
-          <h3>آخرین فعالیت‌ها</h3>
-          <p>پنج حساب تازه‌ساز پلتفرم</p>
+          <h3>{{ t('dashboard.admin.recent.title') }}</h3>
+          <p>{{ t('dashboard.admin.recent.subtitle') }}</p>
         </div>
         <RouterLink
           :to="{ name: 'dashboard-admin-users' }"
           class="panel-link"
           data-test="recent-view-all"
         >
-          مشاهده همه
+          {{ t('common.viewAll') }}
           <ChevronLeft :size="15" />
         </RouterLink>
       </header>
 
       <p v-if="usersLoading" class="state" data-test="recent-loading">
         <LoaderCircle :size="16" class="spin" />
-        در حال بارگذاری…
+        {{ t('dashboard.loading') }}
       </p>
 
       <p v-else-if="usersError" class="state state-error" role="alert" data-test="recent-error">
@@ -298,17 +280,17 @@ onMounted(() => {
       </p>
 
       <p v-else-if="recentUsers.length === 0" class="state" data-test="recent-empty">
-        هنوز کاربری ثبت نشده است.
+        {{ t('dashboard.admin.recent.empty') }}
       </p>
 
       <div v-else class="table-scroll">
         <table class="recent-table">
           <thead>
             <tr>
-              <th scope="col">نام</th>
-              <th scope="col">ایمیل</th>
-              <th scope="col">نقش</th>
-              <th scope="col">تاریخ عضویت</th>
+              <th scope="col">{{ t('dashboard.admin.recent.name') }}</th>
+              <th scope="col">{{ t('dashboard.admin.recent.email') }}</th>
+              <th scope="col">{{ t('dashboard.admin.recent.role') }}</th>
+              <th scope="col">{{ t('dashboard.admin.recent.joined') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -325,7 +307,7 @@ onMounted(() => {
                   {{ roleLabel(user.role) }}
                 </span>
               </td>
-              <td class="row-date">{{ formatDate(user.created_at) }}</td>
+              <td class="row-date">{{ joinedLabel(user.created_at) }}</td>
             </tr>
           </tbody>
         </table>
