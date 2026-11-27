@@ -13,6 +13,8 @@ const InstructorApprovalPage = () =>
   import('../features/admin/pages/InstructorApprovalPage.vue')
 const UserManagementPage = () => import('../features/admin/pages/UserManagementPage.vue')
 const AdminSettingsPage = () => import('../features/admin/pages/AdminSettingsPage.vue')
+const ManageInstructorsPage = () => import('../features/admin/pages/ManageInstructorsPage.vue')
+const ServiceQualityPage = () => import('../features/admin/pages/ServiceQualityPage.vue')
 const ProfilePage = () => import('../features/profile/pages/ProfilePage.vue')
 
 export const routes: RouteRecordRaw[] = [
@@ -125,7 +127,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'manage-instructors',
         name: 'dashboard-manage-instructors',
-        component: PlaceholderPage,
+        component: ManageInstructorsPage,
         meta: { title: 'مدیریت مدرسان' },
       },
       {
@@ -137,7 +139,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'quality',
         name: 'dashboard-quality',
-        component: PlaceholderPage,
+        component: ServiceQualityPage,
         meta: { title: 'کیفیت خدمات' },
       },
       {

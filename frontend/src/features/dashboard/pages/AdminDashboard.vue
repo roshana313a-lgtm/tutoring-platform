@@ -1,42 +1,57 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import { Activity, ChevronLeft, GraduationCap, Server, ShieldCheck, Users } from 'lucide-vue-next'
+import { CalendarDays, GraduationCap, Users } from 'lucide-vue-next'
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
-import StatusBadge from '../components/StatusBadge.vue'
+import { fetchAdminStats, type AdminStats } from '../api/stats'
 
-interface StatSummary {
+interface StatCard {
+  key: 'users' | 'pending' | 'classes'
   title: string
   value: string
   hint: string
   to?: RouteLocationRaw
 }
 
-interface HealthRow {
-  label: string
-  value: string
-  status: string
-  tone: 'success' | 'warning' | 'danger'
-}
-
 const auth = useAuthStore()
 
-const stats: StatSummary[] = [
-  { title: 'کاربران فعال', value: '۱٬۲۴۸', hint: 'در ۳۰ روز گذشته' },
-  {
-    title: 'مدرسان در انتظار تایید',
-    value: '۷',
-    hint: 'درخواست بررسی نشده',
-    to: { name: 'dashboard-admin-instructors' },
-  },
-]
+const stats = ref<AdminStats | null>(null)
+const loading = ref(true)
+const loadError = ref('')
 
-const health: HealthRow[] = [
-  { label: 'دسترسی سرویس', value: '۹۹٫۹۸٪', status: 'سالم', tone: 'success' },
-  { label: 'میانگین زمان پاسخ', value: '۲۴۰ میلی‌ثانیه', status: 'عادی', tone: 'success' },
-  { label: 'صف پردازش پس‌زمینه', value: '۱۲ کار', status: 'کمی شلوغ', tone: 'warning' },
-]
+const formatter = new Intl.NumberFormat('fa-IR')
+
+function formatNumber(value: number): string {
+  return formatter.format(value)
+}
+
+const cards = computed<StatCard[]>(() => {
+  const value = (count: number | undefined) =>
+    count === undefined ? '—' : formatNumber(count)
+
+  return [
+    {
+      key: 'users',
+      title: 'کاربران فعال',
+      value: value(stats.value?.total_users),
+      hint: 'همه حساب‌های ثبت‌شده',
+    },
+    {
+      key: 'pending',
+      title: 'مدرسان در انتظار تایید',
+      value: value(stats.value?.pending_instructors),
+      hint: 'درخواست بررسی نشده',
+      to: { name: 'dashboard-admin-instructors' },
+    },
+    {
+      key: 'classes',
+      title: 'کلاس‌های فعال',
+      value: value(stats.value?.active_classes),
+      hint: 'جلسات در حال برگزاری',
+    },
+  ]
+})
 
 const displayName = computed(() => {
   const fullName = auth.user?.full_name?.trim()
@@ -45,6 +60,21 @@ const displayName = computed(() => {
   const email = auth.user?.email
   return email ? email.split('@')[0] : '—'
 })
+
+async function load(): Promise<void> {
+  loading.value = true
+  loadError.value = ''
+
+  try {
+    stats.value = await fetchAdminStats()
+  } catch {
+    loadError.value = 'دریافت آمار داشبورد ناموفق بود.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(load)
 </script>
 
 <template>
@@ -53,63 +83,38 @@ const displayName = computed(() => {
       <div>
         <p class="eyebrow">نمای مدیر</p>
         <h2>خوش آمدید، {{ displayName }}</h2>
-        <p class="subtitle">وضعیت کاربران، مدرسان و سلامت سرویس‌های پلتفرم</p>
+        <p class="subtitle">آمار زنده کاربران و مدرسان مؤسسه</p>
       </div>
       <span class="role-chip">مدیر</span>
     </header>
 
+    <p v-if="loadError" class="banner" role="alert" data-test="admin-stats-error">
+      {{ loadError }}
+    </p>
+
     <div class="stat-grid" data-test="admin-stats">
       <component
-        :is="stat.to ? RouterLink : 'article'"
-        v-for="stat in stats"
-        :key="stat.title"
-        :to="stat.to"
+        :is="card.to ? RouterLink : 'article'"
+        v-for="card in cards"
+        :key="card.key"
+        :to="card.to"
         class="stat-card"
-        :class="{ 'stat-card-link': stat.to }"
-        :data-test="stat.to ? 'admin-pending-instructors-link' : 'admin-stat'"
+        :class="{ 'stat-card-link': card.to }"
+        :data-test="card.to ? 'admin-pending-instructors-link' : `admin-stat-${card.key}`"
       >
         <span class="stat-icon" aria-hidden="true">
-          <Users v-if="stat.title === 'کاربران فعال'" :size="19" :stroke-width="1.9" />
-          <GraduationCap v-else :size="19" :stroke-width="1.9" />
+          <Users v-if="card.key === 'users'" :size="19" :stroke-width="1.9" />
+          <GraduationCap v-else-if="card.key === 'pending'" :size="19" :stroke-width="1.9" />
+          <CalendarDays v-else :size="19" :stroke-width="1.9" />
         </span>
-        <span class="stat-label">{{ stat.title }}</span>
-        <strong class="stat-value">{{ stat.value }}</strong>
-        <span class="stat-hint">{{ stat.hint }}</span>
-        <span v-if="stat.to" class="stat-cta">
-          بررسی درخواست‌ها
-          <ChevronLeft :size="14" />
-        </span>
+        <span class="stat-label">{{ card.title }}</span>
+        <strong class="stat-value" data-test="stat-value">{{ card.value }}</strong>
+        <span class="stat-hint">{{ card.hint }}</span>
+        <span v-if="card.to" class="stat-cta">بررسی درخواست‌ها</span>
       </component>
     </div>
 
-    <section class="panel" data-test="platform-health">
-      <header class="panel-header">
-        <div class="panel-title">
-          <span class="panel-icon" aria-hidden="true">
-            <Server :size="17" :stroke-width="1.9" />
-          </span>
-          <div>
-            <h3>خلاصه سلامت پلتفرم</h3>
-            <p>وضعیت لحظه‌ای سرویس‌های اصلی</p>
-          </div>
-        </div>
-        <RouterLink :to="{ name: 'dashboard-quality' }" class="panel-link">
-          کیفیت خدمات
-        </RouterLink>
-      </header>
-
-      <ul class="health-list">
-        <li v-for="row in health" :key="row.label" class="health-row" data-test="health-row">
-          <span class="health-icon" aria-hidden="true">
-            <Activity v-if="row.tone === 'success'" :size="16" :stroke-width="2" />
-            <ShieldCheck v-else :size="16" :stroke-width="2" />
-          </span>
-          <span class="health-label">{{ row.label }}</span>
-          <span class="health-value">{{ row.value }}</span>
-          <StatusBadge :label="row.status" :tone="row.tone" />
-        </li>
-      </ul>
-    </section>
+    <p v-if="loading" class="loading-note" data-test="admin-stats-loading">در حال بروزرسانی آمار…</p>
   </section>
 </template>
 
@@ -159,6 +164,17 @@ const displayName = computed(() => {
   white-space: nowrap;
 }
 
+.banner {
+  margin: 0;
+  padding: 12px 18px;
+  border: 1px solid var(--error);
+  border-radius: var(--radius);
+  background: rgba(185, 28, 28, 0.08);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -170,7 +186,7 @@ const displayName = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 148px;
+  min-height: 168px;
   padding: 26px 26px 22px;
   border: 1px solid rgba(31, 111, 92, 0.08);
   border-radius: var(--radius-lg);
@@ -233,110 +249,16 @@ const displayName = computed(() => {
   font-weight: 700;
 }
 
-.panel {
-  padding: 24px 26px;
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-}
-
-.panel-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.panel-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.panel-icon {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.panel-header h3 {
+.loading-note {
   margin: 0;
-  color: var(--primary);
-  font-size: var(--font-size-body);
-}
-
-.panel-header p {
-  margin: 4px 0 0;
   color: var(--text-muted);
   font-size: var(--font-size-xs);
-}
-
-.panel-link {
-  color: var(--primary);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.panel-link:hover {
-  color: var(--primary-hover);
-}
-
-.health-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.health-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.health-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: var(--bg);
-  color: var(--primary);
-}
-
-.health-label {
-  flex: 1;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
-.health-value {
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  white-space: nowrap;
 }
 
 @media (max-width: 600px) {
   .welcome {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .health-row {
-    flex-wrap: wrap;
   }
 }
 </style>

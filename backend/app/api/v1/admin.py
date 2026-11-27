@@ -11,6 +11,7 @@ from app.repositories.setting_repository import SettingsRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.admin import PlatformSettingsResponse, PlatformSettingsUpdate
 from app.schemas.auth import UserResponse
+from app.schemas.dashboard import ServiceQualityStats
 from app.services.platform_settings import build_settings
 
 INSTRUCTOR_ROLE = "instructor"
@@ -87,6 +88,34 @@ async def update_settings(
         await repo.upsert({key: str(value) for key, value in changes.items()})
 
     return build_settings(await repo.get_all())
+
+
+@router.get("/instructors", response_model=list[UserResponse])
+async def list_instructors(
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[UserResponse]:
+    """Every instructor account, including pending and suspended profiles."""
+    instructors = await UserRepository(db).list_role(INSTRUCTOR_ROLE)
+    return [UserResponse.model_validate(instructor) for instructor in instructors]
+
+
+@router.get("/quality", response_model=ServiceQualityStats)
+async def read_service_quality(
+    _: AdminUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ServiceQualityStats:
+    """Service-quality metrics computed from the database.
+
+    Classes and reviews have no tables yet, so those two counts are real zeros
+    rather than invented numbers; suspended accounts are counted directly.
+    """
+    suspended_users = await UserRepository(db).count_suspended(MANAGED_ROLES)
+    return ServiceQualityStats(
+        total_classes=0,
+        average_rating=0.0,
+        suspended_users=suspended_users,
+    )
 
 
 @router.get("/instructors/pending", response_model=list[UserResponse])

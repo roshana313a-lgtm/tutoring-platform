@@ -12,7 +12,7 @@ import InstructorDashboard from '../../src/features/dashboard/pages/InstructorDa
 import AdminDashboard from '../../src/features/dashboard/pages/AdminDashboard.vue'
 import LoginPage from '../../src/features/auth/pages/LoginPage.vue'
 import { routes } from '../../src/router'
-import { clearStoredToken, setStoredToken } from '../../src/shared/api/http'
+import { clearStoredToken, http, setStoredToken } from '../../src/shared/api/http'
 
 type TestRole = 'student' | 'instructor' | 'admin'
 
@@ -45,10 +45,39 @@ async function resolveDashboardPath(role: TestRole): Promise<string> {
   return router.currentRoute.value.fullPath
 }
 
+const INSTRUCTOR_ITEM = {
+  id: 'instructor-1',
+  full_name: 'سارا کریمی',
+  email: 'sara@example.com',
+  short_summary: 'مدرس آیلتس',
+  teaching_languages: ['انگلیسی'],
+  hourly_rate: 250000,
+  education_level: 'کارشناسی ارشد',
+  avatar_url: '',
+}
+
+function mockDashboardApi() {
+  return vi.spyOn(http, 'get').mockImplementation((url: string) => {
+    switch (url) {
+      case '/api/v1/dashboard/admin/stats':
+        return Promise.resolve({ pending_instructors: 1, total_users: 7, active_classes: 0 })
+      case '/api/v1/dashboard/instructor/stats':
+        return Promise.resolve({ today_classes: 2, pending_grading: 4, total_students: 3 })
+      case '/api/v1/dashboard/student/stats':
+        return Promise.resolve({ upcoming_classes: 2, pending_homework: 3, average_grade: 0 })
+      case '/api/v1/instructors':
+        return Promise.resolve([INSTRUCTOR_ITEM])
+      default:
+        return Promise.reject(new Error(`unexpected url: ${url}`))
+    }
+  })
+}
+
 async function mountDashboard(
   component: typeof StudentDashboard | typeof InstructorDashboard | typeof AdminDashboard,
   role: TestRole,
 ) {
+  mockDashboardApi()
   setStoredToken('test-token')
   const { pinia } = activateStore(makeUser(role))
 
@@ -134,7 +163,7 @@ describe('role dashboard rendering', () => {
     expect(wrapper.text()).toContain('کلاس‌های پیش رو')
     expect(wrapper.text()).toContain('تکالیف در انتظار')
     expect(wrapper.text()).toContain('مدرسان پیشنهادی')
-    expect(wrapper.findAll('[data-test="suggested-instructor"]')).toHaveLength(3)
+    expect(wrapper.findAll('[data-test="suggested-instructor"]')).toHaveLength(1)
     expect(wrapper.find('[data-test="instructor-dashboard"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="admin-dashboard"]').exists()).toBe(false)
   })
@@ -146,19 +175,19 @@ describe('role dashboard rendering', () => {
     expect(wrapper.text()).toContain('کلاس‌های امروز')
     expect(wrapper.text()).toContain('در انتظار تصحیح')
     expect(wrapper.text()).toContain('درخواست‌های رزرو')
-    expect(wrapper.findAll('[data-test="booking-request"]')).toHaveLength(3)
+    expect(wrapper.findAll('[data-test="booking-request"]')).toHaveLength(0)
+    expect(wrapper.find('[data-test="booking-empty"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="student-dashboard"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="admin-dashboard"]').exists()).toBe(false)
   })
 
-  it('renders the admin dashboard with user stats and platform health', async () => {
+  it('renders the admin dashboard with live stats', async () => {
     const wrapper = await mountDashboard(AdminDashboard, 'admin')
 
     expect(wrapper.find('[data-test="admin-dashboard"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('کاربران فعال')
     expect(wrapper.text()).toContain('مدرسان در انتظار تایید')
-    expect(wrapper.find('[data-test="platform-health"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-test="health-row"]')).toHaveLength(3)
+    expect(wrapper.find('[data-test="admin-stats"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="student-dashboard"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="instructor-dashboard"]').exists()).toBe(false)
   })

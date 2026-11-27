@@ -1,34 +1,74 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { CalendarClock, ChevronLeft, ClipboardList, Star } from 'lucide-vue-next'
+import { computed, onMounted, ref } from 'vue'
+import {
+  CalendarClock,
+  ChevronLeft,
+  ClipboardList,
+  LoaderCircle,
+  Star,
+  UserRoundSearch,
+} from 'lucide-vue-next'
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
-
-interface StatSummary {
-  title: string
-  value: string
-  hint: string
-}
-
-interface SuggestedInstructor {
-  name: string
-  field: string
-  rating: string
-  slots: string
-}
+import { resolveMediaUrl } from '../../../shared/api/media'
+import { fetchStudentStats, type StudentStats } from '../api/stats'
+import { fetchInstructors, type InstructorListItem } from '../../instructors/api/instructors'
 
 const auth = useAuthStore()
 
-const stats: StatSummary[] = [
-  { title: 'کلاس‌های پیش رو', value: '۲', hint: 'جلسه در هفت روز آینده' },
-  { title: 'تکالیف در انتظار', value: '۳', hint: 'تکلیف نیازمند ارسال' },
-]
+const stats = ref<StudentStats | null>(null)
+const statsError = ref('')
+const instructors = ref<InstructorListItem[]>([])
+const instructorsLoading = ref(true)
+const instructorsError = ref('')
 
-const suggestedInstructors: SuggestedInstructor[] = [
-  { name: 'سارا کریمی', field: 'آیلتس و مکالمه', rating: '۴٫۹', slots: '۳ زمان آزاد' },
-  { name: 'مهدی رضایی', field: 'گرامر پیشرفته', rating: '۴٫۷', slots: '۵ زمان آزاد' },
-  { name: 'نگار موسوی', field: 'انگلیسی تجاری', rating: '۴٫۸', slots: '۲ زمان آزاد' },
-]
+const formatter = new Intl.NumberFormat('fa-IR')
+
+const cards = computed(() => {
+  const grade = stats.value?.average_grade ?? 0
+  const value = (count: number | undefined) =>
+    count === undefined ? '—' : formatter.format(count)
+
+  return [
+    {
+      key: 'upcoming' as const,
+      title: 'کلاس‌های پیش رو',
+      value: value(stats.value?.upcoming_classes),
+      hint: 'جلسه در هفت روز آینده',
+      icon: CalendarClock,
+    },
+    {
+      key: 'homework' as const,
+      title: 'تکالیف در انتظار',
+      value: value(stats.value?.pending_homework),
+      hint: 'تکلیف نیازمند ارسال',
+      icon: ClipboardList,
+    },
+    {
+      key: 'grade' as const,
+      title: 'نمره میانگین',
+      value: grade > 0 ? grade.toFixed(1) : '—',
+      hint: grade > 0 ? 'میانگین نمرات شما' : 'هنوز نمره‌ای ثبت نشده',
+      icon: Star,
+    },
+  ]
+})
+
+function instructorName(instructor: InstructorListItem): string {
+  const fullName = instructor.full_name?.trim()
+  if (fullName) return fullName
+  return instructor.email.split('@')[0] ?? '—'
+}
+
+function instructorLanguages(instructor: InstructorListItem): string {
+  const languages = instructor.teaching_languages ?? []
+  return languages.length > 0 ? languages.join('، ') : 'زبان تدریس ثبت نشده'
+}
+
+function instructorRate(instructor: InstructorListItem): string {
+  if (!instructor.hourly_rate) return 'نرخ توافقی'
+  return `${formatter.format(instructor.hourly_rate)} تومان / ساعت`
+}
 
 const displayName = computed(() => {
   const fullName = auth.user?.full_name?.trim()
@@ -36,6 +76,34 @@ const displayName = computed(() => {
 
   const email = auth.user?.email
   return email ? email.split('@')[0] : '—'
+})
+
+async function loadStats(): Promise<void> {
+  statsError.value = ''
+
+  try {
+    stats.value = await fetchStudentStats()
+  } catch {
+    statsError.value = 'دریافت آمار داشبورد ناموفق بود.'
+  }
+}
+
+async function loadInstructors(): Promise<void> {
+  instructorsLoading.value = true
+  instructorsError.value = ''
+
+  try {
+    instructors.value = await fetchInstructors()
+  } catch {
+    instructorsError.value = 'دریافت فهرست مدرسان ناموفق بود.'
+  } finally {
+    instructorsLoading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadStats()
+  void loadInstructors()
 })
 </script>
 
@@ -45,20 +113,23 @@ const displayName = computed(() => {
       <div>
         <p class="eyebrow">نمای دانش‌آموز</p>
         <h2>خوش آمدید، {{ displayName }}</h2>
-        <p class="subtitle">کلاس‌ها، تکالیف و مدرسان پیشنهادی شما در یک نگاه</p>
+        <p class="subtitle">کلاس‌ها، تکالیف و مدرسان تأییدشده مؤسسه</p>
       </div>
       <span class="role-chip">زبان آموز</span>
     </header>
 
+    <p v-if="statsError" class="banner" role="alert" data-test="student-stats-error">
+      {{ statsError }}
+    </p>
+
     <div class="stat-grid" data-test="student-stats">
-      <article v-for="stat in stats" :key="stat.title" class="stat-card" data-test="student-stat">
+      <article v-for="card in cards" :key="card.key" class="stat-card" data-test="student-stat">
         <span class="stat-icon" aria-hidden="true">
-          <CalendarClock v-if="stat.title === 'کلاس‌های پیش رو'" :size="19" :stroke-width="1.9" />
-          <ClipboardList v-else :size="19" :stroke-width="1.9" />
+          <component :is="card.icon" :size="19" :stroke-width="1.9" />
         </span>
-        <span class="stat-label">{{ stat.title }}</span>
-        <strong class="stat-value">{{ stat.value }}</strong>
-        <span class="stat-hint">{{ stat.hint }}</span>
+        <span class="stat-label">{{ card.title }}</span>
+        <strong class="stat-value" data-test="stat-value">{{ card.value }}</strong>
+        <span class="stat-hint">{{ card.hint }}</span>
       </article>
     </div>
 
@@ -66,7 +137,7 @@ const displayName = computed(() => {
       <header class="panel-header">
         <div>
           <h3>مدرسان پیشنهادی</h3>
-          <p>مناسب سطح فعلی و هدف یادگیری شما</p>
+          <p>مدرسان تأییدشده و فعال مؤسسه</p>
         </div>
         <RouterLink :to="{ name: 'dashboard-instructor-search' }" class="panel-link">
           جستجوی مدرس
@@ -74,26 +145,44 @@ const displayName = computed(() => {
         </RouterLink>
       </header>
 
-      <ul class="instructor-list">
+      <p v-if="instructorsLoading" class="state" data-test="instructors-loading">
+        <LoaderCircle :size="16" class="spin" />
+        در حال بارگذاری…
+      </p>
+
+      <p v-else-if="instructorsError" class="banner" role="alert" data-test="instructors-error">
+        {{ instructorsError }}
+      </p>
+
+      <p v-else-if="instructors.length === 0" class="empty-state" data-test="instructors-empty">
+        <UserRoundSearch :size="18" />
+        هنوز مدرس تأییدشده‌ای برای نمایش وجود ندارد. پس از تایید مدرسان توسط مدیر، اینجا نمایش داده
+        می‌شوند.
+      </p>
+
+      <ul v-else class="instructor-list">
         <li
-          v-for="instructor in suggestedInstructors"
-          :key="instructor.name"
+          v-for="instructor in instructors"
+          :key="instructor.id"
           class="instructor-card"
           data-test="suggested-instructor"
         >
           <span class="instructor-avatar" aria-hidden="true">
-            {{ instructor.name.charAt(0) }}
+            <img
+              v-if="instructor.avatar_url"
+              :src="resolveMediaUrl(instructor.avatar_url)"
+              :alt="instructorName(instructor)"
+            />
+            <template v-else>{{ instructorName(instructor).charAt(0) }}</template>
           </span>
           <div class="instructor-meta">
-            <span class="instructor-name">{{ instructor.name }}</span>
-            <span class="instructor-field">{{ instructor.field }}</span>
+            <span class="instructor-name">{{ instructorName(instructor) }}</span>
+            <span class="instructor-field">{{ instructorLanguages(instructor) }}</span>
           </div>
-          <span class="instructor-rating">
-            <Star :size="14" :stroke-width="2" />
-            {{ instructor.rating }}
-          </span>
-          <span class="instructor-slots">{{ instructor.slots }}</span>
-          <button type="button" class="instructor-action">رزرو کلاس</button>
+          <span class="instructor-rate">{{ instructorRate(instructor) }}</span>
+          <RouterLink :to="{ name: 'dashboard-instructor-search' }" class="instructor-action">
+            مشاهده پروفایل
+          </RouterLink>
         </li>
       </ul>
     </section>
@@ -144,6 +233,17 @@ const displayName = computed(() => {
   font-size: var(--font-size-sm);
   font-weight: 600;
   white-space: nowrap;
+}
+
+.banner {
+  margin: 0;
+  padding: 12px 18px;
+  border: 1px solid var(--error);
+  border-radius: var(--radius);
+  background: rgba(185, 28, 28, 0.08);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
 }
 
 .stat-grid {
@@ -239,6 +339,40 @@ const displayName = computed(() => {
   color: var(--primary-hover);
 }
 
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 28px 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 26px 18px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.8;
+}
+
 .instructor-list {
   display: flex;
   flex-direction: column;
@@ -271,10 +405,17 @@ const displayName = computed(() => {
   flex: none;
   width: 40px;
   height: 40px;
+  overflow: hidden;
   border-radius: 50%;
   background: var(--primary-light);
   color: var(--primary);
   font-weight: 700;
+}
+
+.instructor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .instructor-meta {
@@ -291,21 +432,13 @@ const displayName = computed(() => {
 }
 
 .instructor-field,
-.instructor-slots {
+.instructor-rate {
   color: var(--text-muted);
   font-size: var(--font-size-xs);
 }
 
-.instructor-rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
-  font-size: var(--font-size-xs);
-  font-weight: 700;
+.instructor-rate {
+  white-space: nowrap;
 }
 
 .instructor-action {
@@ -313,12 +446,11 @@ const displayName = computed(() => {
   padding: 8px 14px;
   border: 1px solid var(--primary);
   border-radius: var(--radius);
-  background: transparent;
   color: var(--primary);
-  font-family: inherit;
   font-size: var(--font-size-xs);
   font-weight: 700;
-  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
   transition:
     background 0.2s ease,
     color 0.2s ease;

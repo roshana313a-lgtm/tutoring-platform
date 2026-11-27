@@ -78,9 +78,23 @@ async function mountWithUser(
   auth.user = makeUser(role, overrides)
 
   const router = await withRouter(pinia)
-  const wrapper = mount(component, { global: { plugins: [pinia, router] } })
+  const wrapper = mount(component, {
+    global: { plugins: [pinia, router], stubs: { teleport: true } },
+  })
   await flushPromises()
   return { wrapper, auth }
+}
+
+function mockDashboardStats() {
+  vi.spyOn(http, 'get').mockImplementation((url: string) => {
+    if (url === '/api/v1/dashboard/admin/stats') {
+      return Promise.resolve({ pending_instructors: 1, total_users: 5, active_classes: 0 })
+    }
+    if (url === '/api/v1/dashboard/instructor/stats') {
+      return Promise.resolve({ today_classes: 0, pending_grading: 0, total_students: 0 })
+    }
+    return Promise.reject(new Error(`unexpected url: ${url}`))
+  })
 }
 
 async function settle(): Promise<void> {
@@ -98,6 +112,7 @@ afterEach(() => {
 
 describe('instructor approval status', () => {
   it('shows the pending approval banner for an unapproved instructor', async () => {
+    mockDashboardStats()
     const { wrapper } = await mountWithUser(InstructorDashboard, 'instructor', {
       is_approved: false,
     })
@@ -108,6 +123,7 @@ describe('instructor approval status', () => {
   })
 
   it('hides the banner once the instructor is approved', async () => {
+    mockDashboardStats()
     const { wrapper } = await mountWithUser(InstructorDashboard, 'instructor', {
       is_approved: true,
     })
@@ -116,6 +132,7 @@ describe('instructor approval status', () => {
   })
 
   it('shows the banner again when the store updates to unapproved', async () => {
+    mockDashboardStats()
     const { wrapper, auth } = await mountWithUser(InstructorDashboard, 'instructor', {
       is_approved: true,
     })
@@ -130,6 +147,7 @@ describe('instructor approval status', () => {
 
 describe('admin dashboard approval entry point', () => {
   it('links the pending instructors card to the approval page', async () => {
+    mockDashboardStats()
     const { wrapper } = await mountWithUser(AdminDashboard, 'admin')
 
     const card = wrapper.get('[data-test="admin-pending-instructors-link"]')
