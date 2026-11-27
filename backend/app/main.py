@@ -15,8 +15,11 @@ from app.api.v1.instructors import router as instructors_router
 from app.api.v1.uploads import router as uploads_router
 from app.core.config import settings
 from app.core.errors import error_response
+from app.core.maintenance import MaintenanceModeMiddleware
 
 app = FastAPI()
+# Added first so CORS stays the outermost middleware and wraps the 503s too.
+app.add_middleware(MaintenanceModeMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -43,6 +46,7 @@ _STATUS_CODES: dict[int, str] = {
     404: "NOT_FOUND",
     409: "CONFLICT",
     422: "VALIDATION_ERROR",
+    503: "SERVICE_UNAVAILABLE",
 }
 
 

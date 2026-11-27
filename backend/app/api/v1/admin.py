@@ -24,7 +24,7 @@ from app.schemas.dashboard import (
     RegistrationTrend,
     ServiceQualityStats,
 )
-from app.services.platform_settings import build_settings
+from app.services.platform_settings import build_settings, to_stored_value
 
 INSTRUCTOR_ROLE = "instructor"
 # Roles the admin user-management screen can list and suspend (admins excluded).
@@ -108,7 +108,7 @@ async def update_settings(
     repo = SettingsRepository(db)
     changes = data.model_dump(exclude_none=True)
     if changes:
-        await repo.upsert({key: str(value) for key, value in changes.items()})
+        await repo.upsert({key: to_stored_value(value) for key, value in changes.items()})
 
     return build_settings(await repo.get_all())
 
