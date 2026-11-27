@@ -7,6 +7,7 @@
 | 2d | Role-based dashboards | features/role-dashboards/SPEC.md | features/role-dashboards/PLAN.md | — | Done |
 | 2e | Instructor approval (admin panel) | features/instructor-approval/SPEC.md | features/instructor-approval/PLAN.md | — | Done |
 | 2f | User management & platform settings | features/admin-user-settings/SPEC.md | features/admin-user-settings/PLAN.md | — | Done |
+| 2g | Real dashboard data & admin panels | — | features/role-dashboards/PLAN.md | — | Done |
 | 3 | Instructor discovery & comparison | — | — | — | pending |
 | 4 | Class booking & scheduling | — | — | — | pending |
 | 5 | Online class sessions | — | — | — | pending |

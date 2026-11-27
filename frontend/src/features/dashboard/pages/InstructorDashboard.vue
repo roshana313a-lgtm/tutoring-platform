@@ -1,54 +1,44 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { CalendarCheck, ChevronLeft, ClipboardCheck, Clock, ShieldAlert } from 'lucide-vue-next'
+import { computed, onMounted, ref } from 'vue'
+import { CalendarCheck, ChevronLeft, ClipboardCheck, ClipboardX, ShieldAlert, Users } from 'lucide-vue-next'
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
-import StatusBadge from '../components/StatusBadge.vue'
-
-interface StatSummary {
-  title: string
-  value: string
-  hint: string
-}
-
-interface BookingRequest {
-  student: string
-  course: string
-  requestedAt: string
-  status: string
-  tone: 'success' | 'warning' | 'danger'
-}
+import { fetchInstructorStats, type InstructorStats } from '../api/stats'
 
 const auth = useAuthStore()
 
-const stats: StatSummary[] = [
-  { title: 'کلاس‌های امروز', value: '۳', hint: 'جلسه برنامه‌ریزی شده' },
-  { title: 'در انتظار تصحیح', value: '۵', hint: 'تکلیف ارسال شده' },
-]
+const stats = ref<InstructorStats | null>(null)
+const loadError = ref('')
 
-const bookingRequests: BookingRequest[] = [
-  {
-    student: 'علی احمدی',
-    course: 'مکالمه سطح متوسط',
-    requestedAt: 'امروز، ۰۹:۱۵',
-    status: 'در انتظار تایید',
-    tone: 'warning',
-  },
-  {
-    student: 'مریم رستمی',
-    course: 'آمادگی آیلتس',
-    requestedAt: 'دیروز، ۲۱:۴۰',
-    status: 'در انتظار تایید',
-    tone: 'warning',
-  },
-  {
-    student: 'حسین نوری',
-    course: 'گرامر پیشرفته',
-    requestedAt: '۲ روز پیش',
-    status: 'تایید شده',
-    tone: 'success',
-  },
-]
+const formatter = new Intl.NumberFormat('fa-IR')
+
+const cards = computed(() => {
+  const value = (count: number | undefined) => (count === undefined ? '—' : formatter.format(count))
+
+  return [
+    {
+      key: 'today' as const,
+      title: 'کلاس‌های امروز',
+      value: value(stats.value?.today_classes),
+      hint: 'جلسه برنامه‌ریزی شده',
+      icon: CalendarCheck,
+    },
+    {
+      key: 'grading' as const,
+      title: 'در انتظار تصحیح',
+      value: value(stats.value?.pending_grading),
+      hint: 'تکلیف ارسال شده',
+      icon: ClipboardCheck,
+    },
+    {
+      key: 'students' as const,
+      title: 'دانشجویان من',
+      value: value(stats.value?.total_students),
+      hint: 'زبان‌آموز در ارتباط با شما',
+      icon: Users,
+    },
+  ]
+})
 
 const isApproved = computed(() => auth.user?.is_approved !== false)
 
@@ -59,6 +49,18 @@ const displayName = computed(() => {
   const email = auth.user?.email
   return email ? email.split('@')[0] : '—'
 })
+
+async function load(): Promise<void> {
+  loadError.value = ''
+
+  try {
+    stats.value = await fetchInstructorStats()
+  } catch {
+    loadError.value = 'دریافت آمار داشبورد ناموفق بود.'
+  }
+}
+
+onMounted(load)
 </script>
 
 <template>
@@ -77,20 +79,28 @@ const displayName = computed(() => {
       <div>
         <p class="eyebrow">نمای مدرس</p>
         <h2>خوش آمدید، {{ displayName }}</h2>
-        <p class="subtitle">برنامه امروز و درخواست‌های رزرو شما</p>
+        <p class="subtitle">برنامه امروز و وضعیت تکالیف شما</p>
       </div>
       <span class="role-chip">مدرس</span>
     </header>
 
+    <p v-if="loadError" class="banner" role="alert" data-test="instructor-stats-error">
+      {{ loadError }}
+    </p>
+
     <div class="stat-grid" data-test="instructor-stats">
-      <article v-for="stat in stats" :key="stat.title" class="stat-card" data-test="instructor-stat">
+      <article
+        v-for="card in cards"
+        :key="card.key"
+        class="stat-card"
+        data-test="instructor-stat"
+      >
         <span class="stat-icon" aria-hidden="true">
-          <CalendarCheck v-if="stat.title === 'کلاس‌های امروز'" :size="19" :stroke-width="1.9" />
-          <ClipboardCheck v-else :size="19" :stroke-width="1.9" />
+          <component :is="card.icon" :size="19" :stroke-width="1.9" />
         </span>
-        <span class="stat-label">{{ stat.title }}</span>
-        <strong class="stat-value">{{ stat.value }}</strong>
-        <span class="stat-hint">{{ stat.hint }}</span>
+        <span class="stat-label">{{ card.title }}</span>
+        <strong class="stat-value" data-test="stat-value">{{ card.value }}</strong>
+        <span class="stat-hint">{{ card.hint }}</span>
       </article>
     </div>
 
@@ -106,26 +116,11 @@ const displayName = computed(() => {
         </RouterLink>
       </header>
 
-      <ul class="request-list">
-        <li
-          v-for="request in bookingRequests"
-          :key="request.student"
-          class="request-card"
-          data-test="booking-request"
-        >
-          <span class="request-avatar" aria-hidden="true">{{ request.student.charAt(0) }}</span>
-          <div class="request-meta">
-            <span class="request-name">{{ request.student }}</span>
-            <span class="request-course">{{ request.course }}</span>
-          </div>
-          <span class="request-time">
-            <Clock :size="13" :stroke-width="2" />
-            {{ request.requestedAt }}
-          </span>
-          <StatusBadge :label="request.status" :tone="request.tone" />
-          <button type="button" class="request-action">بررسی درخواست</button>
-        </li>
-      </ul>
+      <p class="empty-state" data-test="booking-empty">
+        <ClipboardX :size="18" />
+        هنوز درخواست رزروی ثبت نشده است. درخواست‌های جدید پس از فعال شدن رزرو کلاس در اینجا نمایش
+        داده می‌شوند.
+      </p>
     </section>
   </section>
 </template>
@@ -202,6 +197,17 @@ const displayName = computed(() => {
   font-size: var(--font-size-sm);
   font-weight: 600;
   white-space: nowrap;
+}
+
+.banner {
+  margin: 0;
+  padding: 12px 18px;
+  border: 1px solid var(--error);
+  border-radius: var(--radius);
+  background: rgba(185, 28, 28, 0.08);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
 }
 
 .stat-grid {
@@ -297,100 +303,23 @@ const displayName = computed(() => {
   color: var(--primary-hover);
 }
 
-.request-list {
+.empty-state {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 10px;
   margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.request-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
+  padding: 26px 18px;
+  border: 1px dashed var(--border);
   border-radius: var(--radius);
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease;
-}
-
-.request-card:hover {
-  border-color: var(--primary);
-  background: var(--bg);
-}
-
-.request-avatar {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--primary-light);
-  color: var(--primary);
-  font-weight: 700;
-}
-
-.request-meta {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.request-name {
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-}
-
-.request-course,
-.request-time {
   color: var(--text-muted);
-  font-size: var(--font-size-xs);
-}
-
-.request-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.request-action {
-  flex: none;
-  padding: 8px 14px;
-  border: 1px solid var(--primary);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--primary);
-  font-family: inherit;
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-.request-action:hover {
-  background: var(--primary);
-  color: #fff;
+  font-size: var(--font-size-sm);
+  line-height: 1.8;
 }
 
 @media (max-width: 600px) {
   .welcome {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .request-card {
-    flex-wrap: wrap;
   }
 }
 </style>

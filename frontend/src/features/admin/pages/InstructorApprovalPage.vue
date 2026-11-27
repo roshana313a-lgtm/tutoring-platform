@@ -34,7 +34,9 @@ const formattedRate = computed(() => {
 
 function displayName(user: User): string {
   const fullName = user.full_name?.trim()
-  return fullName && fullName.length > 0 ? fullName : '—'
+  if (fullName) return fullName
+  // Unnamed profiles still need an identifiable label in the table and modal.
+  return user.email.split('@')[0] ?? '—'
 }
 
 function avatarInitial(user: User): string {
@@ -197,18 +199,19 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div
-      v-if="selected"
-      class="modal-backdrop"
-      data-test="instructor-modal"
-      @click.self="closeDetails"
-    >
+    <Teleport to="body">
       <div
-        class="modal"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="`جزئیات ${displayName(selected)}`"
+        v-if="selected"
+        class="modal-backdrop"
+        data-test="instructor-modal"
+        @click.self="closeDetails"
       >
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="`جزئیات ${displayName(selected)}`"
+        >
         <header class="modal-header">
           <div class="modal-identity">
             <span class="modal-avatar" data-test="modal-avatar">
@@ -282,30 +285,31 @@ onUnmounted(() => {
           </p>
         </div>
 
-        <footer class="modal-actions">
-          <button
-            type="button"
-            class="action approve"
-            data-test="modal-approve"
-            :disabled="busyId === selected.id"
-            @click="approve(selected)"
-          >
-            <CheckCircle2 :size="15" />
-            تایید
-          </button>
-          <button
-            type="button"
-            class="action reject"
-            data-test="modal-reject"
-            :disabled="busyId === selected.id"
-            @click="reject(selected)"
-          >
-            <UserRoundX :size="15" />
-            رد
-          </button>
-        </footer>
+          <footer class="modal-actions">
+            <button
+              type="button"
+              class="action approve"
+              data-test="modal-approve"
+              :disabled="busyId === selected.id"
+              @click="approve(selected)"
+            >
+              <CheckCircle2 :size="15" />
+              تایید
+            </button>
+            <button
+              type="button"
+              class="action reject"
+              data-test="modal-reject"
+              :disabled="busyId === selected.id"
+              @click="reject(selected)"
+            >
+              <UserRoundX :size="15" />
+              رد
+            </button>
+          </footer>
+        </div>
       </div>
-    </div>
+    </Teleport>
   </section>
 </template>
 
@@ -501,15 +505,17 @@ onUnmounted(() => {
   opacity: 0.6;
 }
 
+/* Teleported to body so the dashboard's animated content container cannot trap
+   the overlay in its stacking context below the sticky top bar. */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 9999;
   display: grid;
   place-items: center;
-  padding: 24px;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(2px);
+  padding: 2rem 24px 24px;
+  background: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(4px);
 }
 
 .modal {
@@ -541,7 +547,8 @@ onUnmounted(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px 24px 16px;
+  /* Keeps the avatar, name and email clear of the viewport edge / top bar. */
+  padding: 2rem 24px 16px;
   border-bottom: 1px solid var(--border);
 }
 

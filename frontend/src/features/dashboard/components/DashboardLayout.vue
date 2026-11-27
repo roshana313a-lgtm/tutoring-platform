@@ -105,6 +105,10 @@ const avatarInitial = computed(() => displayName.value.charAt(0).toUpperCase())
 
 const avatarSrc = computed(() => resolveMediaUrl(auth.user?.avatar_url))
 
+const settingsRouteName = computed(() =>
+  auth.user?.role === 'admin' ? 'dashboard-admin-settings' : 'dashboard-settings',
+)
+
 const pageTitle = computed(() => {
   const title = route.meta.title
   return typeof title === 'string' && title.length > 0 ? title : 'داشبورد'
@@ -148,7 +152,7 @@ async function logout(): Promise<void> {
       </nav>
 
       <div class="sidebar-footer">
-        <RouterLink :to="{ name: 'dashboard-settings' }" class="footer-link">
+        <RouterLink :to="{ name: settingsRouteName }" class="footer-link">
           <Settings :size="17" />
           <span>تنظیمات</span>
         </RouterLink>

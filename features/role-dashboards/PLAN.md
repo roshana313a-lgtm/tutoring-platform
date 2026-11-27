@@ -41,3 +41,29 @@
 - `vitest run` — new redirect/rendering suites plus the existing sidebar and layout suites.
 - `vue-tsc --noEmit` / `vite build` where the toolchain is available (Node is not installed on
   this machine; `vue-tsc` under Bun cannot resolve `.vue` modules, a pre-existing limitation).
+
+## Real-data pass (Feature 2g)
+
+Hardcoded dashboard numbers were removed; every card now reads the database through one API call
+per dashboard.
+
+| Piece | File | Notes |
+| --- | --- | --- |
+| Stats endpoints | `backend/app/api/v1/dashboard.py` | `GET /dashboard/{admin,instructor,student}/stats`, role-guarded with `require_role` |
+| Instructor directory | `backend/app/api/v1/instructors.py` | `GET /instructors` — approved + active only, for the student dashboard |
+| Admin directory | `backend/app/api/v1/admin.py` | `GET /admin/instructors` (all statuses), `GET /admin/quality` |
+| Counts | `backend/app/repositories/user_repository.py` | `count_all`, `count_by_role`, `count_unapproved`, `count_suspended`, `list_role`, `list_approved_instructors` |
+| Frontend clients | `frontend/src/features/dashboard/api/stats.ts`, `features/instructors/api/instructors.ts`, `features/admin/api/quality.ts` | Typed wrappers over `http` |
+| Admin pages | `frontend/src/features/admin/pages/ManageInstructorsPage.vue`, `ServiceQualityPage.vue` | Status filters, approve/reject (two-step) and suspend actions; quality metrics |
+
+Decisions:
+
+1. **Zero means zero.** Classes, assignments, grades and ratings have no tables yet (Features 4/7/8),
+   so those fields return real zeros from the database instead of invented numbers, with a note on
+   the service-quality page explaining it.
+2. **The approval modal is teleported to `body`.** The dashboard content wrapper animates with
+   `animation-fill-mode: both`, which creates a stacking context, so a child `z-index` could never
+   beat the sticky top bar; the overlay now lives outside it with `z-index: 9999`, a darker blurred
+   backdrop and `2rem` top padding.
+3. **Suspension is the only stateful admin action on approved instructors.** Rejecting deletes the
+   account, so it is offered only for pending requests and needs an explicit second click.

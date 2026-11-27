@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
@@ -32,6 +32,58 @@ class UserRepository:
             .order_by(User.created_at)
         )
         return list(result.scalars().all())
+
+    async def count_all(self) -> int:
+        return int(await self.db.scalar(select(func.count()).select_from(User)) or 0)
+
+    async def count_by_role(self, role: str) -> int:
+        return int(
+            await self.db.scalar(
+                select(func.count()).select_from(User).where(User.role == role)
+            )
+            or 0
+        )
+
+    async def count_unapproved(self, role: str) -> int:
+        return int(
+            await self.db.scalar(
+                select(func.count())
+                .select_from(User)
+                .where(User.role == role, User.is_approved.is_(False))
+            )
+            or 0
+        )
+
+    async def list_approved_instructors(self) -> list[User]:
+        """Approved, active instructors — the only ones allowed in discovery."""
+        result = await self.db.execute(
+            select(User)
+            .where(
+                User.role == "instructor",
+                User.is_approved.is_(True),
+                User.is_active.is_(True),
+            )
+            .order_by(User.full_name, User.email)
+        )
+        return list(result.scalars().all())
+
+    async def list_role(self, role: str) -> list[User]:
+        """Every account holding `role`, newest first (approved, pending, suspended)."""
+        result = await self.db.execute(
+            select(User).where(User.role == role).order_by(User.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    async def count_suspended(self, roles: list[str]) -> int:
+        """Accounts in `roles` whose access is currently suspended."""
+        return int(
+            await self.db.scalar(
+                select(func.count())
+                .select_from(User)
+                .where(User.role.in_(roles), User.is_active.is_(False))
+            )
+            or 0
+        )
 
     async def list_by_roles(self, roles: list[str]) -> list[User]:
         """All users holding one of `roles`, newest first."""
