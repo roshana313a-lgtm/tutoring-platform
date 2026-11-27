@@ -67,6 +67,8 @@ function mockDashboardApi() {
         return Promise.resolve({ upcoming_classes: 2, pending_homework: 3, average_grade: 0 })
       case '/api/v1/instructors':
         return Promise.resolve([INSTRUCTOR_ITEM])
+      case '/api/v1/admin/users':
+        return Promise.resolve([])
       default:
         return Promise.reject(new Error(`unexpected url: ${url}`))
     }

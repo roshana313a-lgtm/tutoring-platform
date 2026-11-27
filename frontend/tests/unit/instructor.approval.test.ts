@@ -62,6 +62,9 @@ function mockDashboardStats() {
     if (url === '/api/v1/dashboard/instructor/stats') {
       return Promise.resolve({ today_classes: 0, pending_grading: 0, total_students: 0 })
     }
+    if (url === '/api/v1/admin/users') {
+      return Promise.resolve([])
+    }
     return Promise.reject(new Error(`unexpected url: ${url}`))
   })
 }

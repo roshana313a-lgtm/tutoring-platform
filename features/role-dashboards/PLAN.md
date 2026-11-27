@@ -67,3 +67,20 @@ Decisions:
    backdrop and `2rem` top padding.
 3. **Suspension is the only stateful admin action on approved instructors.** Rejecting deletes the
    account, so it is offered only for pending requests and needs an explicit second click.
+
+## Admin overview layout (SaaS pass)
+
+The admin dashboard is now an overview screen instead of three bare cards.
+
+| Piece | Source | Notes |
+| --- | --- | --- |
+| Welcome banner | `auth.user` | Gradient hero with the admin avatar (initials fallback) and the full Persian date |
+| Stat cards | `GET /dashboard/admin/stats` | One icon per metric, 32px padding, hover lift; the pending card links to the pending tab |
+| Quick actions | Router | Pending instructor review, user management and platform settings |
+| Recent activity | `GET /admin/users` | Newest five by `created_at`, rendered as name / email / role / date with a «مشاهده همه» link |
+
+Decisions:
+
+1. **Recent activity reuses the admin users list.** The endpoint already returns managed users newest
+   first, so no new backend route was needed; the client re-sorts defensively before slicing five.
+2. **No new dependency.** Icons come from `lucide-vue-next`, formatting from `Intl` (`fa-IR`).

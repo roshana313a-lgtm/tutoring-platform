@@ -1,9 +1,21 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, type Component } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
-import { CalendarDays, GraduationCap, Users } from 'lucide-vue-next'
+import {
+  BookOpen,
+  ChevronLeft,
+  GraduationCap,
+  LoaderCircle,
+  Settings,
+  ShieldCheck,
+  UserCheck,
+  Users,
+} from 'lucide-vue-next'
 
+import { fetchUsers } from '../../admin/api/users'
+import type { User } from '../../auth/api/auth'
 import { useAuthStore } from '../../auth/stores/useAuthStore'
+import { resolveMediaUrl } from '../../../shared/api/media'
 import { fetchAdminStats, type AdminStats } from '../api/stats'
 
 interface StatCard {
@@ -11,8 +23,19 @@ interface StatCard {
   title: string
   value: string
   hint: string
+  icon: Component
   to?: RouteLocationRaw
 }
+
+interface QuickAction {
+  key: string
+  label: string
+  description: string
+  icon: Component
+  to: RouteLocationRaw
+}
+
+const RECENT_LIMIT = 5
 
 const auth = useAuthStore()
 
@@ -20,15 +43,33 @@ const stats = ref<AdminStats | null>(null)
 const loading = ref(true)
 const loadError = ref('')
 
+const users = ref<User[]>([])
+const usersLoading = ref(true)
+const usersError = ref('')
+
 const formatter = new Intl.NumberFormat('fa-IR')
+const dateFormatter = new Intl.DateTimeFormat('fa-IR', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+})
+const todayLabel = new Intl.DateTimeFormat('fa-IR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+}).format(new Date())
 
 function formatNumber(value: number): string {
   return formatter.format(value)
 }
 
+function formatDate(value: string): string {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '—' : dateFormatter.format(date)
+}
+
 const cards = computed<StatCard[]>(() => {
-  const value = (count: number | undefined) =>
-    count === undefined ? '—' : formatNumber(count)
+  const value = (count: number | undefined) => (count === undefined ? '—' : formatNumber(count))
 
   return [
     {
@@ -36,12 +77,14 @@ const cards = computed<StatCard[]>(() => {
       title: 'کاربران فعال',
       value: value(stats.value?.total_users),
       hint: 'همه حساب‌های ثبت‌شده',
+      icon: Users,
     },
     {
       key: 'pending',
       title: 'مدرسان در انتظار تایید',
       value: value(stats.value?.pending_instructors),
       hint: 'درخواست بررسی نشده',
+      icon: GraduationCap,
       to: { name: 'dashboard-manage-instructors', query: { status: 'pending' } },
     },
     {
@@ -49,9 +92,40 @@ const cards = computed<StatCard[]>(() => {
       title: 'کلاس‌های فعال',
       value: value(stats.value?.active_classes),
       hint: 'جلسات در حال برگزاری',
+      icon: BookOpen,
     },
   ]
 })
+
+const quickActions: QuickAction[] = [
+  {
+    key: 'approve',
+    label: 'تایید مدرسان جدید',
+    description: 'بررسی درخواست‌های ثبت‌نام مدرسان',
+    icon: UserCheck,
+    to: { name: 'dashboard-manage-instructors', query: { status: 'pending' } },
+  },
+  {
+    key: 'users',
+    label: 'مدیریت کاربران',
+    description: 'زبان‌آموزان و مدرسان، وضعیت دسترسی',
+    icon: Users,
+    to: { name: 'dashboard-admin-users' },
+  },
+  {
+    key: 'settings',
+    label: 'تنظیمات پلتفرم',
+    description: 'تنظیمات عمومی مؤسسه و نمایش',
+    icon: Settings,
+    to: { name: 'dashboard-admin-settings' },
+  },
+]
+
+const recentUsers = computed(() =>
+  [...users.value]
+    .sort((first, second) => Date.parse(second.created_at) - Date.parse(first.created_at))
+    .slice(0, RECENT_LIMIT),
+)
 
 const displayName = computed(() => {
   const fullName = auth.user?.full_name?.trim()
@@ -61,7 +135,31 @@ const displayName = computed(() => {
   return email ? email.split('@')[0] : '—'
 })
 
-async function load(): Promise<void> {
+const avatarUrl = computed(() => resolveMediaUrl(auth.user?.avatar_url))
+const avatarInitial = computed(() => displayName.value.charAt(0).toUpperCase())
+
+function userLabel(user: User): string {
+  const fullName = user.full_name?.trim()
+  if (fullName) return fullName
+  return user.email.split('@')[0] ?? '—'
+}
+
+function userInitial(user: User): string {
+  return userLabel(user).charAt(0).toUpperCase()
+}
+
+function roleLabel(role: User['role']): string {
+  switch (role) {
+    case 'admin':
+      return 'مدیر'
+    case 'instructor':
+      return 'مدرس'
+    default:
+      return 'زبان‌آموز'
+  }
+}
+
+async function loadStats(): Promise<void> {
   loading.value = true
   loadError.value = ''
 
@@ -74,18 +172,47 @@ async function load(): Promise<void> {
   }
 }
 
-onMounted(load)
+async function loadRecentUsers(): Promise<void> {
+  usersLoading.value = true
+  usersError.value = ''
+
+  try {
+    users.value = await fetchUsers()
+  } catch {
+    usersError.value = 'دریافت آخرین کاربران ناموفق بود.'
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadStats()
+  void loadRecentUsers()
+})
 </script>
 
 <template>
   <section class="dashboard-page" data-test="admin-dashboard">
-    <header class="welcome">
-      <div>
-        <p class="eyebrow">نمای مدیر</p>
-        <h2>خوش آمدید، {{ displayName }}</h2>
-        <p class="subtitle">آمار زنده کاربران و مدرسان مؤسسه</p>
+    <header class="hero">
+      <div class="hero-main">
+        <span class="hero-avatar" data-test="admin-avatar">
+          <img v-if="avatarUrl" :src="avatarUrl" alt="" />
+          <template v-else>{{ avatarInitial }}</template>
+        </span>
+        <div class="hero-copy">
+          <p class="hero-eyebrow">نمای مدیر</p>
+          <h2>خوش آمدید، {{ displayName }}</h2>
+          <p class="hero-subtitle">آمار زنده کاربران و مدرسان مؤسسه</p>
+        </div>
       </div>
-      <span class="role-chip">مدیر</span>
+
+      <div class="hero-side">
+        <span class="hero-badge">
+          <ShieldCheck :size="15" />
+          دسترسی کامل مدیر
+        </span>
+        <span class="hero-date">{{ todayLabel }}</span>
+      </div>
     </header>
 
     <p v-if="loadError" class="banner" role="alert" data-test="admin-stats-error">
@@ -99,22 +226,111 @@ onMounted(load)
         :key="card.key"
         :to="card.to"
         class="stat-card"
-        :class="{ 'stat-card-link': card.to }"
+        :class="[`stat-${card.key}`, { 'stat-card-link': card.to }]"
         :data-test="card.to ? 'admin-pending-instructors-link' : `admin-stat-${card.key}`"
       >
         <span class="stat-icon" aria-hidden="true">
-          <Users v-if="card.key === 'users'" :size="19" :stroke-width="1.9" />
-          <GraduationCap v-else-if="card.key === 'pending'" :size="19" :stroke-width="1.9" />
-          <CalendarDays v-else :size="19" :stroke-width="1.9" />
+          <component :is="card.icon" :size="20" :stroke-width="1.9" />
         </span>
         <span class="stat-label">{{ card.title }}</span>
         <strong class="stat-value" data-test="stat-value">{{ card.value }}</strong>
         <span class="stat-hint">{{ card.hint }}</span>
-        <span v-if="card.to" class="stat-cta">بررسی درخواست‌ها</span>
+        <span v-if="card.to" class="stat-cta">
+          بررسی درخواست‌ها
+          <ChevronLeft :size="14" />
+        </span>
       </component>
     </div>
 
-    <p v-if="loading" class="loading-note" data-test="admin-stats-loading">در حال بروزرسانی آمار…</p>
+    <p v-if="loading" class="loading-note" data-test="admin-stats-loading">
+      در حال بروزرسانی آمار…
+    </p>
+
+    <section class="section" data-test="quick-actions">
+      <div class="section-head">
+        <h3>دسترسی سریع</h3>
+        <p>کارهای پرتکرار مدیر</p>
+      </div>
+
+      <div class="action-grid">
+        <RouterLink
+          v-for="action in quickActions"
+          :key="action.key"
+          :to="action.to"
+          class="action-card"
+          :data-test="`quick-action-${action.key}`"
+        >
+          <span class="action-icon" aria-hidden="true">
+            <component :is="action.icon" :size="22" :stroke-width="1.9" />
+          </span>
+          <span class="action-body">
+            <strong>{{ action.label }}</strong>
+            <span class="action-desc">{{ action.description }}</span>
+          </span>
+          <ChevronLeft class="action-chevron" :size="18" aria-hidden="true" />
+        </RouterLink>
+      </div>
+    </section>
+
+    <section class="panel" data-test="recent-activity">
+      <header class="panel-head">
+        <div>
+          <h3>آخرین فعالیت‌ها</h3>
+          <p>پنج حساب تازه‌ساز پلتفرم</p>
+        </div>
+        <RouterLink
+          :to="{ name: 'dashboard-admin-users' }"
+          class="panel-link"
+          data-test="recent-view-all"
+        >
+          مشاهده همه
+          <ChevronLeft :size="15" />
+        </RouterLink>
+      </header>
+
+      <p v-if="usersLoading" class="state" data-test="recent-loading">
+        <LoaderCircle :size="16" class="spin" />
+        در حال بارگذاری…
+      </p>
+
+      <p v-else-if="usersError" class="state state-error" role="alert" data-test="recent-error">
+        {{ usersError }}
+      </p>
+
+      <p v-else-if="recentUsers.length === 0" class="state" data-test="recent-empty">
+        هنوز کاربری ثبت نشده است.
+      </p>
+
+      <div v-else class="table-scroll">
+        <table class="recent-table">
+          <thead>
+            <tr>
+              <th scope="col">نام</th>
+              <th scope="col">ایمیل</th>
+              <th scope="col">نقش</th>
+              <th scope="col">تاریخ عضویت</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in recentUsers" :key="user.id" data-test="recent-user">
+              <td>
+                <span class="row-user">
+                  <span class="row-avatar" aria-hidden="true">{{ userInitial(user) }}</span>
+                  <span class="row-name">{{ userLabel(user) }}</span>
+                </span>
+              </td>
+              <td class="row-email">{{ user.email }}</td>
+              <td>
+                <span class="role-chip" :class="`role-${user.role}`" data-test="recent-role">
+                  {{ roleLabel(user.role) }}
+                </span>
+              </td>
+              <td class="row-date">{{ formatDate(user.created_at) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </section>
 </template>
 
@@ -125,42 +341,113 @@ onMounted(load)
   gap: 24px;
 }
 
-.welcome {
+.hero {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 24px 28px;
-  background: var(--card-bg);
+  gap: 24px;
+  overflow: hidden;
+  padding: 30px 34px;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  background:
+    radial-gradient(circle at 12% 15%, rgba(255, 255, 255, 0.24), transparent 45%),
+    linear-gradient(125deg, var(--primary) 0%, var(--primary-hover) 65%, #143c33 100%);
+  box-shadow: 0 18px 40px -18px rgba(15, 60, 50, 0.55);
+  color: #fff;
 }
 
-.eyebrow {
-  margin: 0 0 4px;
-  color: var(--text-muted);
+.hero::after {
+  position: absolute;
+  top: -70px;
+  left: -40px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  content: '';
+  pointer-events: none;
+}
+
+.hero-main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.hero-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.6);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.hero-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-copy {
+  min-width: 0;
+}
+
+.hero-eyebrow {
+  margin: 0 0 6px;
+  color: rgba(255, 255, 255, 0.78);
   font-size: var(--font-size-xs);
+  letter-spacing: 0.02em;
 }
 
-.welcome h2 {
+.hero h2 {
   margin: 0;
-  color: var(--primary);
+  color: #fff;
   font-size: var(--font-size-title);
 }
 
-.subtitle {
-  margin: 6px 0 0;
-  color: var(--text-muted);
+.hero-subtitle {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.82);
   font-size: var(--font-size-sm);
 }
 
-.role-chip {
-  padding: 6px 14px;
+.hero-side {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  text-align: left;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 999px;
-  background: var(--primary-light);
-  color: var(--primary);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hero-date {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: var(--font-size-xs);
   white-space: nowrap;
 }
 
@@ -185,30 +472,46 @@ onMounted(load)
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: 168px;
-  padding: 26px 26px 22px;
+  gap: 10px;
+  min-height: 190px;
+  padding: 32px 30px 28px;
   border: 1px solid rgba(31, 111, 92, 0.08);
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, var(--card-bg) 0%, var(--primary-light) 160%);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(150deg, var(--card-bg) 0%, var(--primary-light) 170%);
+  box-shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.stat-card:hover {
+  border-color: rgba(31, 111, 92, 0.28);
+  box-shadow: 0 22px 40px -18px rgba(31, 111, 92, 0.4);
+  transform: translateY(-4px);
 }
 
 .stat-icon {
-  position: absolute;
-  top: 22px;
-  left: 24px;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--primary);
-  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.stat-pending .stat-icon {
+  background: rgba(217, 119, 6, 0.14);
+  color: #b45309;
+}
+
+.stat-classes .stat-icon {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
 }
 
 .stat-label {
-  padding-left: 48px;
   color: var(--text-muted);
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -216,8 +519,8 @@ onMounted(load)
 
 .stat-value {
   color: var(--primary);
-  font-size: var(--font-size-title);
-  line-height: 1.1;
+  font-size: 2.4rem;
+  line-height: 1.05;
 }
 
 .stat-hint {
@@ -230,14 +533,6 @@ onMounted(load)
   color: inherit;
   text-decoration: none;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.stat-card-link:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 30px -8px rgba(31, 111, 92, 0.25);
 }
 
 .stat-cta {
@@ -255,10 +550,236 @@ onMounted(load)
   font-size: var(--font-size-xs);
 }
 
-@media (max-width: 600px) {
-  .welcome {
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.section-head h3,
+.panel-head h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.section-head p,
+.panel-head p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  box-shadow: 0 6px 18px -12px rgba(0, 0, 0, 0.18);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.action-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 20px 36px -20px rgba(31, 111, 92, 0.45);
+  transform: translateY(-3px);
+}
+
+.action-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.action-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.action-body strong {
+  color: var(--text);
+  font-size: var(--font-size-sm);
+}
+
+.action-desc {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+}
+
+.action-chevron {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.action-card:hover .action-chevron {
+  color: var(--primary);
+}
+
+.panel {
+  padding: 22px 26px 10px;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.panel-link:hover {
+  color: var(--primary-hover);
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 32px 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.state-error {
+  color: var(--error);
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.recent-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.recent-table th,
+.recent-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.recent-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.recent-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.recent-table tbody tr:hover {
+  background: var(--bg);
+}
+
+.row-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.row-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.row-name {
+  font-weight: 600;
+}
+
+.row-email,
+.row-date {
+  color: var(--text-muted);
+}
+
+.role-chip {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.role-instructor {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+}
+
+.role-admin {
+  background: rgba(217, 119, 6, 0.14);
+  color: #b45309;
+}
+
+@media (max-width: 820px) {
+  .hero {
     align-items: flex-start;
     flex-direction: column;
+    padding: 24px;
+  }
+
+  .hero-side {
+    align-items: flex-start;
   }
 }
 </style>
