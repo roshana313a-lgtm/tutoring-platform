@@ -28,6 +28,13 @@ const LEVEL_OPTIONS = [
 ]
 
 // The stored value stays a stable identifier; only the label is translated.
+const EDUCATION_OPTIONS = [
+  { value: 'دیپلم', labelKey: 'profile.educationOptions.diploma' },
+  { value: 'کارشناسی', labelKey: 'profile.educationOptions.bachelor' },
+  { value: 'کارشناسی ارشد', labelKey: 'profile.educationOptions.master' },
+  { value: 'دکتری', labelKey: 'profile.educationOptions.phd' },
+]
+
 const LANGUAGE_OPTIONS = [
   { value: 'انگلیسی', labelKey: 'profile.languageOptions.english' },
   { value: 'آلمانی', labelKey: 'profile.languageOptions.german' },
@@ -54,6 +61,7 @@ const profileSchema = z.object({
     .int(t('validation.hourlyRateInteger'))
     .min(0, t('validation.hourlyRateMin')),
   teaching_languages: z.array(z.string()).max(20, t('validation.languagesMax')),
+  education_level: z.string().max(64),
   short_summary: z
     .string()
     .max(MAX_SUMMARY, t('validation.summaryMax')),
@@ -67,6 +75,7 @@ function initialValues() {
     learning_goal: auth.user?.learning_goal ?? '',
     hourly_rate: auth.user?.hourly_rate ?? 0,
     teaching_languages: auth.user?.teaching_languages ?? [],
+    education_level: auth.user?.education_level ?? '',
     short_summary: auth.user?.short_summary ?? '',
   }
 }
@@ -84,6 +93,7 @@ const { value: hourlyRate, errorMessage: hourlyRateError } = useField<string | n
   'hourly_rate',
 )
 const { value: teachingLanguages } = useField<string[]>('teaching_languages')
+const { value: educationLevel } = useField<string>('education_level')
 const { value: shortSummary, errorMessage: summaryError } = useField<string>('short_summary')
 
 const avatarUrl = ref(auth.user?.avatar_url ?? '')
@@ -178,6 +188,7 @@ const onSubmit = handleSubmit(async (values) => {
   if (isInstructor.value) {
     payload.hourly_rate = Number(values.hourly_rate)
     payload.teaching_languages = values.teaching_languages
+    payload.education_level = values.education_level
     payload.short_summary = values.short_summary
   }
 
@@ -315,6 +326,20 @@ const onSubmit = handleSubmit(async (values) => {
             <span v-if="hourlyRateError" class="field-error" role="alert">
               {{ hourlyRateError }}
             </span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">{{ t('profile.educationLevel') }}</span>
+            <select v-model="educationLevel" data-test="education-level">
+              <option value="">{{ t('profile.educationLevelPlaceholder') }}</option>
+              <option
+                v-for="option in EDUCATION_OPTIONS"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ t(option.labelKey) }}
+              </option>
+            </select>
           </label>
         </div>
 

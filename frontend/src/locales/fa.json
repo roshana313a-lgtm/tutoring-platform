@@ -293,6 +293,14 @@
     "hourlyRate": "قیمت هر ساعت (تومان)",
     "hourlyRatePlaceholder": "مثال: ۲۵۰۰۰۰",
     "languages": "زبان‌های تدریس",
+    "educationLevel": "سطح تحصیلات",
+    "educationLevelPlaceholder": "انتخاب سطح تحصیلات",
+    "educationOptions": {
+      "diploma": "دیپلم",
+      "bachelor": "کارشناسی",
+      "master": "کارشناسی ارشد",
+      "phd": "دکتری"
+    },
     "summary": "خلاصه رزومه",
     "summaryPlaceholder": "معرفی کوتاه از خودتان (حداکثر ۲۰۰ کاراکتر)",
     "saved": "اطلاعات پروفایل با موفقیت ذخیره شد.",
