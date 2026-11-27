@@ -53,8 +53,11 @@
       "users": "Manage users",
       "quality": "Service quality",
       "settings": "Settings",
-      "profile": "My profile"
-    }
+      "profile": "My profile",
+      "complaints": "Complaints & support",
+      "support": "Support & complaints"
+    },
+    "complaints": "Complaints & support"
   },
   "layout": {
     "brand": "Online Learning Institute",
@@ -135,7 +138,10 @@
     "action": "This action failed. Please try again.",
     "userToggle": "Could not change the user status. Please try again.",
     "formErrors": "Please fix the form errors.",
-    "registrationTrend": "Could not load the registration trend."
+    "registrationTrend": "Could not load the registration trend.",
+    "complaints": "Could not load the complaints.",
+    "complaintSubmit": "Could not submit your complaint. Please try again.",
+    "complaintStatus": "Could not update the complaint status."
   },
   "dashboard": {
     "welcome": "Welcome, {name}",
@@ -154,7 +160,10 @@
         "classes": "Active classes",
         "classesHint": "Sessions in progress",
         "usersCta": "View users",
-        "classesCta": "View service quality"
+        "classesCta": "View service quality",
+        "complaints": "Open complaints",
+        "complaintsHint": "Tickets waiting for review",
+        "complaintsCta": "View complaints"
       },
       "quickActions": {
         "title": "Quick actions",
@@ -373,10 +382,52 @@
       "supportEmail": "Support email",
       "saved": "Settings saved.",
       "submit": "Save settings"
+    },
+    "complaints": {
+      "eyebrow": "Support",
+      "title": "Complaints & support",
+      "subtitle": "Review and follow up on the tickets students and instructors send.",
+      "count": "{count} complaints",
+      "empty": "No complaints have been submitted yet.",
+      "startedMessage": "Complaint “{subject}” is now in progress.",
+      "resolvedMessage": "Complaint “{subject}” was resolved.",
+      "columns": {
+        "subject": "Subject",
+        "user": "User",
+        "status": "Status",
+        "date": "Date",
+        "actions": "Actions"
+      },
+      "status": {
+        "open": "Open",
+        "in_progress": "In progress",
+        "resolved": "Resolved"
+      },
+      "actions": {
+        "start": "In progress",
+        "resolve": "Resolved",
+        "done": "Closed"
+      }
     }
   },
   "placeholder": {
     "fallback": "This section",
     "body": "This section is under construction and will be available soon."
+  },
+  "support": {
+    "page": {
+      "eyebrow": "Contact the admin",
+      "title": "Support & complaints",
+      "subtitle": "Tell the institute admin what went wrong; they will look into it shortly.",
+      "subject": "Subject",
+      "subjectPlaceholder": "For example: problem booking a class",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what happened…",
+      "submit": "Send complaint",
+      "submitting": "Sending…",
+      "required": "Please fill in both the subject and the description.",
+      "success": "Your complaint was submitted. The admin will review it shortly.",
+      "hint": "The admin reply will appear in this panel."
+    }
   }
 }

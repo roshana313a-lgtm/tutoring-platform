@@ -14,6 +14,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   LifeBuoy,
+  MessagesSquare,
   Search,
   Settings,
   TrendingUp,
@@ -42,6 +43,7 @@ const studentMenu: MenuItem[] = [
   { labelKey: 'nav.myClasses', to: { name: 'dashboard-classes' }, icon: CalendarDays },
   { labelKey: 'nav.myHomework', to: { name: 'dashboard-homework' }, icon: BookOpen },
   { labelKey: 'nav.myProgress', to: { name: 'dashboard-progress' }, icon: TrendingUp },
+  { labelKey: 'nav.support', to: { name: 'dashboard-support' }, icon: LifeBuoy },
   { labelKey: 'nav.myProfile', to: { name: 'profile' }, icon: UserRound },
 ]
 
@@ -50,6 +52,7 @@ const instructorMenu: MenuItem[] = [
   { labelKey: 'nav.students', to: { name: 'dashboard-students' }, icon: Users },
   { labelKey: 'nav.submitHomework', to: { name: 'dashboard-homework-new' }, icon: ClipboardList },
   { labelKey: 'nav.evaluations', to: { name: 'dashboard-evaluations' }, icon: ClipboardCheck },
+  { labelKey: 'nav.support', to: { name: 'dashboard-support' }, icon: LifeBuoy },
   { labelKey: 'nav.myProfile', to: { name: 'profile' }, icon: UserRound },
 ]
 
@@ -57,6 +60,7 @@ const adminMenu: MenuItem[] = [
   { labelKey: 'nav.manageInstructors', to: { name: 'dashboard-manage-instructors' }, icon: GraduationCap },
   { labelKey: 'nav.manageUsers', to: { name: 'dashboard-admin-users' }, icon: Users },
   { labelKey: 'nav.quality', to: { name: 'dashboard-quality' }, icon: ChartNoAxesColumn },
+  { labelKey: 'nav.complaints', to: { name: 'dashboard-admin-complaints' }, icon: MessagesSquare },
   { labelKey: 'nav.settings', to: { name: 'dashboard-admin-settings' }, icon: Settings },
   { labelKey: 'nav.myProfile', to: { name: 'profile' }, icon: UserRound },
 ]
@@ -165,10 +169,6 @@ async function logout(): Promise<void> {
           <Settings :size="17" />
           <span>{{ t('nav.settings') }}</span>
         </RouterLink>
-        <a class="footer-link" href="mailto:support@example.com">
-          <LifeBuoy :size="17" />
-          <span>{{ t('nav.support') }}</span>
-        </a>
       </div>
     </aside>
 

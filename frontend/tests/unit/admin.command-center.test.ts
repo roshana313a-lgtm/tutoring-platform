@@ -87,6 +87,7 @@ async function mountDashboard(stub: DashboardStub = {}) {
           pending_instructors: pending,
           total_users: users.length,
           active_classes: 0,
+          open_complaints: 0,
         })
       case '/api/v1/admin/users':
         return failUsers ? Promise.reject(new Error('boom')) : Promise.resolve(users)

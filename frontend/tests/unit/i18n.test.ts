@@ -71,6 +71,7 @@ describe('language switcher', () => {
       'Manage instructors',
       'Manage users',
       'Service quality',
+      'Complaints & support',
       'Settings',
       'My profile',
     ])

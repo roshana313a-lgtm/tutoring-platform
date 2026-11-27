@@ -4,6 +4,7 @@ export interface AdminStats {
   pending_instructors: number
   total_users: number
   active_classes: number
+  open_complaints: number
 }
 
 export interface InstructorStats {

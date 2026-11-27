@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db
 from app.core.deps import require_role
 from app.models.user import User
+from app.repositories.complaint_repository import ComplaintRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.dashboard import (
     AdminDashboardStats,
@@ -40,6 +41,7 @@ async def admin_stats(
         pending_instructors=await users.count_unapproved(INSTRUCTOR_ROLE),
         total_users=await users.count_all(),
         active_classes=0,
+        open_complaints=await ComplaintRepository(db).count_open(),
     )
 
 

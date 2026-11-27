@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   GraduationCap,
   LoaderCircle,
+  MessagesSquare,
   Settings,
   ShieldCheck,
   UserCheck,
@@ -47,7 +48,7 @@ ChartJS.register(
 )
 
 interface StatCard {
-  key: 'users' | 'pending' | 'classes'
+  key: 'users' | 'pending' | 'classes' | 'complaints'
   title: string
   value: string
   hint: string
@@ -130,6 +131,16 @@ const cards = computed<StatCard[]>(() => [
     to: { name: 'dashboard-quality' },
     cta: t('dashboard.admin.stats.classesCta'),
     testId: 'admin-stat-classes-link',
+  },
+  {
+    key: 'complaints',
+    title: t('dashboard.admin.stats.complaints'),
+    value: formatCount(stats.value?.open_complaints),
+    hint: t('dashboard.admin.stats.complaintsHint'),
+    icon: MessagesSquare,
+    to: { name: 'dashboard-admin-complaints' },
+    cta: t('dashboard.admin.stats.complaintsCta'),
+    testId: 'admin-stat-complaints-link',
   },
 ])
 
