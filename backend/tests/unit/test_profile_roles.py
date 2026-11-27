@@ -112,6 +112,61 @@ async def test_common_new_fields_are_available_to_every_role(client: AsyncClient
 
 
 @pytest.mark.asyncio
+async def test_instructor_can_save_education_level_with_teaching_fields(
+    client: AsyncClient,
+) -> None:
+    token = await register_user(client, "roles-instructor-education@example.com", role="instructor")
+    headers = auth_headers(token)
+    payload = {
+        "education_level": "کارشناسی ارشد",
+        "hourly_rate": 250000,
+        "teaching_languages": ["انگلیسی"],
+        "short_summary": "مدرس آیلتس",
+    }
+
+    response = await client.put("/api/v1/auth/profile", json=payload, headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert isinstance(body, dict)
+    assert body["education_level"] == "کارشناسی ارشد"
+
+    me = await client.get("/api/v1/auth/me", headers=headers)
+    assert me.status_code == 200
+    assert me.json()["education_level"] == "کارشناسی ارشد"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"short_description": "unknown fields are forbidden"},
+        {"education_level": "x" * 65},
+    ],
+)
+async def test_instructor_education_level_is_validated(
+    client: AsyncClient,
+    payload: dict[str, object],
+) -> None:
+    token = await register_user(
+        client,
+        f"roles-instructor-education-invalid-{next(iter(payload))}@example.com",
+        role="instructor",
+    )
+
+    response = await client.put(
+        "/api/v1/auth/profile",
+        json=payload,
+        headers=auth_headers(token),
+    )
+
+    assert response.status_code == 422
+    body = response.json()
+    assert isinstance(body, dict)
+    assert error_code(body) == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "payload",
     [

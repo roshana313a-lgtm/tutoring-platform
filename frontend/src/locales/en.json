@@ -293,6 +293,14 @@
     "hourlyRate": "Hourly rate (Toman)",
     "hourlyRatePlaceholder": "e.g. 250000",
     "languages": "Teaching languages",
+    "educationLevel": "Education level",
+    "educationLevelPlaceholder": "Select an education level",
+    "educationOptions": {
+      "diploma": "Diploma",
+      "bachelor": "Bachelor",
+      "master": "Master",
+      "phd": "PhD"
+    },
     "summary": "Resume summary",
     "summaryPlaceholder": "A short introduction about yourself (max 200 characters)",
     "saved": "Your profile was saved.",
