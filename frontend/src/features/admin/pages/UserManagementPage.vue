@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { LoaderCircle, ShieldBan, ShieldCheck, Users } from 'lucide-vue-next'
 
 import { fetchUsers, toggleUserSuspension } from '../api/users'
 import type { User } from '../../auth/api/auth'
+
+const { t } = useI18n()
 
 const users = ref<User[]>([])
 const loading = ref(true)
@@ -18,7 +21,7 @@ function displayName(user: User): string {
 }
 
 function roleLabel(user: User): string {
-  return user.role === 'instructor' ? 'مدرس' : 'زبان آموز'
+  return user.role === 'instructor' ? t('roles.instructor') : t('roles.student')
 }
 
 async function load(): Promise<void> {
@@ -28,7 +31,7 @@ async function load(): Promise<void> {
   try {
     users.value = await fetchUsers()
   } catch {
-    loadError.value = 'دریافت فهرست کاربران ناموفق بود.'
+    loadError.value = t('errors.users')
   } finally {
     loading.value = false
   }
@@ -45,10 +48,10 @@ async function toggle(user: User): Promise<void> {
       item.id === updated.id ? { ...item, is_active: updated.is_active } : item,
     )
     successMessage.value = updated.is_active
-      ? `دسترسی ${displayName(user)} فعال شد.`
-      : `حساب ${displayName(user)} مسدود شد.`
+      ? t('admin.users.activatedMessage', { name: displayName(user) })
+      : t('admin.users.suspendedMessage', { name: displayName(user) })
   } catch {
-    actionError.value = 'تغییر وضعیت کاربر ناموفق بود. دوباره تلاش کنید.'
+    actionError.value = t('errors.userToggle')
   } finally {
     busyId.value = null
   }
@@ -61,13 +64,13 @@ onMounted(load)
   <section class="users-page" data-test="users-page">
     <header class="page-header">
       <div>
-        <p class="eyebrow">مدیریت کاربران</p>
-        <h2>کاربران پلتفرم</h2>
-        <p class="subtitle">زبان‌آموزان و مدرسان مؤسسه</p>
+        <p class="eyebrow">{{ t('admin.users.eyebrow') }}</p>
+        <h2>{{ t('admin.users.title') }}</h2>
+        <p class="subtitle">{{ t('admin.users.subtitle') }}</p>
       </div>
       <span class="counter">
         <Users :size="15" />
-        {{ users.length }} کاربر
+        {{ t('admin.users.count', { count: users.length }) }}
       </span>
     </header>
 
@@ -81,7 +84,7 @@ onMounted(load)
     <div class="panel">
       <p v-if="loading" class="state" data-test="users-loading">
         <LoaderCircle :size="16" class="spin" />
-        در حال بارگذاری…
+        {{ t('common.loading') }}
       </p>
 
       <p v-else-if="loadError" class="state state-error" role="alert" data-test="users-error">
@@ -89,18 +92,18 @@ onMounted(load)
       </p>
 
       <p v-else-if="users.length === 0" class="state" data-test="users-empty">
-        هنوز کاربری ثبت نشده است.
+        {{ t('admin.users.empty') }}
       </p>
 
       <div v-else class="table-scroll">
         <table class="users-table">
           <thead>
             <tr>
-              <th scope="col">نام</th>
-              <th scope="col">ایمیل</th>
-              <th scope="col">نقش</th>
-              <th scope="col">وضعیت</th>
-              <th scope="col">اقدام</th>
+              <th scope="col">{{ t('admin.users.columns.name') }}</th>
+              <th scope="col">{{ t('admin.users.columns.email') }}</th>
+              <th scope="col">{{ t('admin.users.columns.role') }}</th>
+              <th scope="col">{{ t('admin.users.columns.status') }}</th>
+              <th scope="col">{{ t('admin.users.columns.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -116,7 +119,7 @@ onMounted(load)
                   :class="user.is_active === false ? 'status-suspended' : 'status-active'"
                   data-test="user-status"
                 >
-                  {{ user.is_active === false ? 'مسدود' : 'فعال' }}
+                  {{ user.is_active === false ? t('admin.users.statusSuspended') : t('admin.users.statusActive') }}
                 </span>
               </td>
               <td>
@@ -130,7 +133,7 @@ onMounted(load)
                 >
                   <ShieldCheck v-if="user.is_active === false" :size="15" />
                   <ShieldBan v-else :size="15" />
-                  {{ user.is_active === false ? 'فعال کردن' : 'مسدود کردن' }}
+                  {{ user.is_active === false ? t('admin.users.activate') : t('admin.users.suspend') }}
                 </button>
               </td>
             </tr>

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 withDefaults(
   defineProps<{
     variant: 'success' | 'error'
@@ -47,7 +51,7 @@ defineEmits<{
       type="button"
       class="banner-close"
       data-test="dismiss"
-      aria-label="بستن پیام خطا"
+      :aria-label="t('auth.dismissBanner')"
       @click="$emit('dismiss')"
     >
       ×

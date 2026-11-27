@@ -117,6 +117,23 @@ textarea {
   font: inherit;
 }
 
+/* English switches to a Latin stack and LTR alignment; Persian keeps Estedad. */
+html[dir='ltr'] body {
+  font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, system-ui, sans-serif;
+  font-feature-settings: normal;
+  word-spacing: normal;
+}
+
+html[dir='ltr'] .auth-card,
+html[dir='ltr'] .field,
+html[dir='ltr'] .user-meta,
+html[dir='ltr'] .field-hint,
+html[dir='ltr'] .instructors-table,
+html[dir='ltr'] .users-table,
+html[dir='ltr'] .recent-table {
+  text-align: left;
+}
+
 a {
   color: var(--primary);
   text-decoration: none;

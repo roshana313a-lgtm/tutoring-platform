@@ -1,40 +1,42 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { CalendarCheck, ChevronLeft, ClipboardCheck, ClipboardX, ShieldAlert, Users } from 'lucide-vue-next'
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
+import { formatNumber } from '../../../i18n/format'
 import { fetchInstructorStats, type InstructorStats } from '../api/stats'
 
 const auth = useAuthStore()
+const { t, locale } = useI18n()
 
 const stats = ref<InstructorStats | null>(null)
 const loadError = ref('')
 
-const formatter = new Intl.NumberFormat('fa-IR')
-
 const cards = computed(() => {
-  const value = (count: number | undefined) => (count === undefined ? '—' : formatter.format(count))
+  const value = (count: number | undefined) =>
+    count === undefined ? '—' : formatNumber(count, locale.value)
 
   return [
     {
       key: 'today' as const,
-      title: 'کلاس‌های امروز',
+      title: t('dashboard.instructor.cards.today'),
       value: value(stats.value?.today_classes),
-      hint: 'جلسه برنامه‌ریزی شده',
+      hint: t('dashboard.instructor.cards.todayHint'),
       icon: CalendarCheck,
     },
     {
       key: 'grading' as const,
-      title: 'در انتظار تصحیح',
+      title: t('dashboard.instructor.cards.grading'),
       value: value(stats.value?.pending_grading),
-      hint: 'تکلیف ارسال شده',
+      hint: t('dashboard.instructor.cards.gradingHint'),
       icon: ClipboardCheck,
     },
     {
       key: 'students' as const,
-      title: 'دانشجویان من',
+      title: t('dashboard.instructor.cards.students'),
       value: value(stats.value?.total_students),
-      hint: 'زبان‌آموز در ارتباط با شما',
+      hint: t('dashboard.instructor.cards.studentsHint'),
       icon: Users,
     },
   ]
@@ -56,7 +58,7 @@ async function load(): Promise<void> {
   try {
     stats.value = await fetchInstructorStats()
   } catch {
-    loadError.value = 'دریافت آمار داشبورد ناموفق بود.'
+    loadError.value = t('errors.stats')
   }
 }
 
@@ -68,20 +70,18 @@ onMounted(load)
     <div v-if="!isApproved" class="approval-banner" data-test="approval-banner">
       <ShieldAlert :size="20" :stroke-width="2" class="approval-icon" aria-hidden="true" />
       <div>
-        <strong>حساب شما در انتظار تایید مدیر است</strong>
-        <p>
-          پروفایل شما هنوز توسط مدیر تایید نشده است. تا آن زمان در لیست جستجو نمایش داده نمی‌شوید.
-        </p>
+        <strong>{{ t('dashboard.instructor.approvalTitle') }}</strong>
+        <p>{{ t('dashboard.instructor.approvalText') }}</p>
       </div>
     </div>
 
     <header class="welcome">
       <div>
-        <p class="eyebrow">نمای مدرس</p>
-        <h2>خوش آمدید، {{ displayName }}</h2>
-        <p class="subtitle">برنامه امروز و وضعیت تکالیف شما</p>
+        <p class="eyebrow">{{ t('dashboard.instructor.eyebrow') }}</p>
+        <h2>{{ t('dashboard.welcome', { name: displayName }) }}</h2>
+        <p class="subtitle">{{ t('dashboard.instructor.subtitle') }}</p>
       </div>
-      <span class="role-chip">مدرس</span>
+      <span class="role-chip">{{ t('roles.instructor') }}</span>
     </header>
 
     <p v-if="loadError" class="banner" role="alert" data-test="instructor-stats-error">
@@ -107,19 +107,18 @@ onMounted(load)
     <section class="panel" data-test="booking-requests">
       <header class="panel-header">
         <div>
-          <h3>درخواست‌های رزرو</h3>
-          <p>رزروهای جدیدی که منتظر پاسخ شما هستند</p>
+          <h3>{{ t('dashboard.instructor.bookings.title') }}</h3>
+          <p>{{ t('dashboard.instructor.bookings.subtitle') }}</p>
         </div>
         <RouterLink :to="{ name: 'dashboard-classes' }" class="panel-link">
-          مشاهده کلاس‌ها
+          {{ t('dashboard.instructor.bookings.viewClasses') }}
           <ChevronLeft :size="15" />
         </RouterLink>
       </header>
 
       <p class="empty-state" data-test="booking-empty">
         <ClipboardX :size="18" />
-        هنوز درخواست رزروی ثبت نشده است. درخواست‌های جدید پس از فعال شدن رزرو کلاس در اینجا نمایش
-        داده می‌شوند.
+        {{ t('dashboard.instructor.bookings.empty') }}
       </p>
     </section>
   </section>

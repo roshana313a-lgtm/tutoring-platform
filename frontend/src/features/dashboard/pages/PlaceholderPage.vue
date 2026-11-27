@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { Construction } from 'lucide-vue-next'
 
 const route = useRoute()
+const { t } = useI18n()
 
 const title = computed(() => {
-  const metaTitle = route.meta.title
-  return typeof metaTitle === 'string' && metaTitle.length > 0 ? metaTitle : 'این بخش'
+  const key = route.meta.title
+  return typeof key === 'string' && key.length > 0 ? t(key) : t('placeholder.fallback')
 })
 </script>
 
@@ -17,7 +19,7 @@ const title = computed(() => {
       <Construction :size="26" :stroke-width="1.7" />
     </span>
     <h2>{{ title }}</h2>
-    <p>این بخش در حال ساخت است و به‌زودی در دسترس قرار می‌گیرد.</p>
+    <p>{{ t('placeholder.body') }}</p>
   </section>
 </template>
 

@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { LoaderCircle, Save, Settings2 } from 'lucide-vue-next'
 
 import { fetchSettings, saveSettings } from '../api/settings'
+
+const { t } = useI18n()
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -23,13 +26,13 @@ function validate(): boolean {
   for (const key of Object.keys(errors)) delete errors[key]
 
   if (!form.platform_name.trim()) {
-    errors.platform_name = 'نام پلتفرم را وارد کنید'
+    errors.platform_name = t('validation.platformName')
   }
   if (!Number.isFinite(Number(form.default_hourly_rate)) || Number(form.default_hourly_rate) < 0) {
-    errors.default_hourly_rate = 'نرخ پیش‌فرض باید عددی نامنفی باشد'
+    errors.default_hourly_rate = t('validation.defaultRate')
   }
   if (!EMAIL_PATTERN.test(form.support_email.trim())) {
-    errors.support_email = 'ایمیل پشتیبانی معتبر نیست'
+    errors.support_email = t('validation.supportEmail')
   }
 
   return Object.keys(errors).length === 0
@@ -45,7 +48,7 @@ async function load(): Promise<void> {
     form.default_hourly_rate = settings.default_hourly_rate
     form.support_email = settings.support_email
   } catch {
-    loadError.value = 'دریافت تنظیمات ناموفق بود.'
+    loadError.value = t('errors.settingsLoad')
   } finally {
     loading.value = false
   }
@@ -56,7 +59,7 @@ async function submit(): Promise<void> {
   successMessage.value = ''
 
   if (!validate()) {
-    formError.value = 'لطفاً خطاهای فرم را برطرف کنید.'
+    formError.value = t('errors.formErrors')
     return
   }
 
@@ -70,9 +73,9 @@ async function submit(): Promise<void> {
     form.platform_name = saved.platform_name
     form.default_hourly_rate = saved.default_hourly_rate
     form.support_email = saved.support_email
-    successMessage.value = 'تنظیمات با موفقیت ذخیره شد.'
+    successMessage.value = t('admin.settings.saved')
   } catch {
-    formError.value = 'ذخیره تنظیمات ناموفق بود. دوباره تلاش کنید.'
+    formError.value = t('errors.settingsSave')
   } finally {
     saving.value = false
   }
@@ -85,9 +88,9 @@ onMounted(load)
   <section class="settings-page" data-test="settings-page">
     <header class="page-header">
       <div>
-        <p class="eyebrow">تنظیمات پلتفرم</p>
-        <h2>تنظیمات</h2>
-        <p class="subtitle">پیکربندی عمومی مؤسسه</p>
+        <p class="eyebrow">{{ t('admin.settings.eyebrow') }}</p>
+        <h2>{{ t('admin.settings.title') }}</h2>
+        <p class="subtitle">{{ t('admin.settings.subtitle') }}</p>
       </div>
       <span class="header-icon" aria-hidden="true">
         <Settings2 :size="20" />
@@ -104,7 +107,7 @@ onMounted(load)
     <form class="panel" data-test="settings-form" @submit.prevent="submit">
       <p v-if="loading" class="state" data-test="settings-loading">
         <LoaderCircle :size="16" class="spin" />
-        در حال بارگذاری…
+        {{ t('common.loading') }}
       </p>
 
       <p v-else-if="loadError" class="state state-error" role="alert" data-test="settings-load-error">
@@ -113,7 +116,7 @@ onMounted(load)
 
       <template v-else>
         <label class="field">
-          <span class="field-label">نام پلتفرم</span>
+          <span class="field-label">{{ t('admin.settings.platformName') }}</span>
           <input v-model="form.platform_name" data-test="platform-name" type="text" />
           <span v-if="errors.platform_name" class="field-error" data-test="platform-name-error">
             {{ errors.platform_name }}
@@ -121,7 +124,7 @@ onMounted(load)
         </label>
 
         <label class="field">
-          <span class="field-label">نرخ پیش‌فرض هر ساعت (تومان)</span>
+          <span class="field-label">{{ t('admin.settings.defaultRate') }}</span>
           <input
             v-model.number="form.default_hourly_rate"
             data-test="default-rate"
@@ -135,7 +138,7 @@ onMounted(load)
         </label>
 
         <label class="field">
-          <span class="field-label">ایمیل پشتیبانی</span>
+          <span class="field-label">{{ t('admin.settings.supportEmail') }}</span>
           <input v-model="form.support_email" data-test="support-email" type="email" dir="ltr" />
           <span v-if="errors.support_email" class="field-error" data-test="support-email-error">
             {{ errors.support_email }}
@@ -145,7 +148,7 @@ onMounted(load)
         <div class="form-actions">
           <button type="submit" class="save-button" data-test="settings-submit" :disabled="saving">
             <Save :size="16" />
-            {{ saving ? 'در حال ذخیره…' : 'ذخیره تنظیمات' }}
+            {{ saving ? t('common.saving') : t('admin.settings.submit') }}
           </button>
         </div>
       </template>

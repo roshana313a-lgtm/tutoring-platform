@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   CalendarClock,
   ChevronLeft,
@@ -11,10 +12,12 @@ import {
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
 import { resolveMediaUrl } from '../../../shared/api/media'
+import { formatNumber } from '../../../i18n/format'
 import { fetchStudentStats, type StudentStats } from '../api/stats'
 import { fetchInstructors, type InstructorListItem } from '../../instructors/api/instructors'
 
 const auth = useAuthStore()
+const { t, locale } = useI18n()
 
 const stats = ref<StudentStats | null>(null)
 const statsError = ref('')
@@ -22,33 +25,31 @@ const instructors = ref<InstructorListItem[]>([])
 const instructorsLoading = ref(true)
 const instructorsError = ref('')
 
-const formatter = new Intl.NumberFormat('fa-IR')
-
 const cards = computed(() => {
   const grade = stats.value?.average_grade ?? 0
   const value = (count: number | undefined) =>
-    count === undefined ? '—' : formatter.format(count)
+    count === undefined ? '—' : formatNumber(count, locale.value)
 
   return [
     {
       key: 'upcoming' as const,
-      title: 'کلاس‌های پیش رو',
+      title: t('dashboard.student.cards.upcoming'),
       value: value(stats.value?.upcoming_classes),
-      hint: 'جلسه در هفت روز آینده',
+      hint: t('dashboard.student.cards.upcomingHint'),
       icon: CalendarClock,
     },
     {
       key: 'homework' as const,
-      title: 'تکالیف در انتظار',
+      title: t('dashboard.student.cards.homework'),
       value: value(stats.value?.pending_homework),
-      hint: 'تکلیف نیازمند ارسال',
+      hint: t('dashboard.student.cards.homeworkHint'),
       icon: ClipboardList,
     },
     {
       key: 'grade' as const,
-      title: 'نمره میانگین',
+      title: t('dashboard.student.cards.grade'),
       value: grade > 0 ? grade.toFixed(1) : '—',
-      hint: grade > 0 ? 'میانگین نمرات شما' : 'هنوز نمره‌ای ثبت نشده',
+      hint: grade > 0 ? t('dashboard.student.cards.gradeHint') : t('dashboard.student.cards.noGrade'),
       icon: Star,
     },
   ]
@@ -62,12 +63,13 @@ function instructorName(instructor: InstructorListItem): string {
 
 function instructorLanguages(instructor: InstructorListItem): string {
   const languages = instructor.teaching_languages ?? []
-  return languages.length > 0 ? languages.join('، ') : 'زبان تدریس ثبت نشده'
+  if (languages.length === 0) return t('dashboard.student.instructors.noLanguage')
+  return languages.join(locale.value === 'fa' ? '، ' : ', ')
 }
 
 function instructorRate(instructor: InstructorListItem): string {
-  if (!instructor.hourly_rate) return 'نرخ توافقی'
-  return `${formatter.format(instructor.hourly_rate)} تومان / ساعت`
+  if (!instructor.hourly_rate) return t('common.negotiable')
+  return `${formatNumber(instructor.hourly_rate, locale.value)} ${t('common.perHour')}`
 }
 
 const displayName = computed(() => {
@@ -84,7 +86,7 @@ async function loadStats(): Promise<void> {
   try {
     stats.value = await fetchStudentStats()
   } catch {
-    statsError.value = 'دریافت آمار داشبورد ناموفق بود.'
+    statsError.value = t('errors.stats')
   }
 }
 
@@ -95,7 +97,7 @@ async function loadInstructors(): Promise<void> {
   try {
     instructors.value = await fetchInstructors()
   } catch {
-    instructorsError.value = 'دریافت فهرست مدرسان ناموفق بود.'
+    instructorsError.value = t('errors.instructors')
   } finally {
     instructorsLoading.value = false
   }
@@ -111,11 +113,11 @@ onMounted(() => {
   <section class="dashboard-page" data-test="student-dashboard">
     <header class="welcome">
       <div>
-        <p class="eyebrow">نمای دانش‌آموز</p>
-        <h2>خوش آمدید، {{ displayName }}</h2>
-        <p class="subtitle">کلاس‌ها، تکالیف و مدرسان تأییدشده مؤسسه</p>
+        <p class="eyebrow">{{ t('dashboard.student.eyebrow') }}</p>
+        <h2>{{ t('dashboard.welcome', { name: displayName }) }}</h2>
+        <p class="subtitle">{{ t('dashboard.student.subtitle') }}</p>
       </div>
-      <span class="role-chip">زبان آموز</span>
+      <span class="role-chip">{{ t('roles.student') }}</span>
     </header>
 
     <p v-if="statsError" class="banner" role="alert" data-test="student-stats-error">
@@ -136,18 +138,18 @@ onMounted(() => {
     <section class="panel" data-test="suggested-instructors">
       <header class="panel-header">
         <div>
-          <h3>مدرسان پیشنهادی</h3>
-          <p>مدرسان تأییدشده و فعال مؤسسه</p>
+          <h3>{{ t('dashboard.student.instructors.title') }}</h3>
+          <p>{{ t('dashboard.student.instructors.subtitle') }}</p>
         </div>
         <RouterLink :to="{ name: 'dashboard-instructor-search' }" class="panel-link">
-          جستجوی مدرس
+          {{ t('dashboard.student.instructors.search') }}
           <ChevronLeft :size="15" />
         </RouterLink>
       </header>
 
       <p v-if="instructorsLoading" class="state" data-test="instructors-loading">
         <LoaderCircle :size="16" class="spin" />
-        در حال بارگذاری…
+        {{ t('dashboard.loading') }}
       </p>
 
       <p v-else-if="instructorsError" class="banner" role="alert" data-test="instructors-error">
@@ -156,8 +158,7 @@ onMounted(() => {
 
       <p v-else-if="instructors.length === 0" class="empty-state" data-test="instructors-empty">
         <UserRoundSearch :size="18" />
-        هنوز مدرس تأییدشده‌ای برای نمایش وجود ندارد. پس از تایید مدرسان توسط مدیر، اینجا نمایش داده
-        می‌شوند.
+        {{ t('dashboard.student.instructors.empty') }}
       </p>
 
       <ul v-else class="instructor-list">
@@ -181,7 +182,7 @@ onMounted(() => {
           </div>
           <span class="instructor-rate">{{ instructorRate(instructor) }}</span>
           <RouterLink :to="{ name: 'dashboard-instructor-search' }" class="instructor-action">
-            مشاهده پروفایل
+            {{ t('dashboard.student.instructors.viewProfile') }}
           </RouterLink>
         </li>
       </ul>

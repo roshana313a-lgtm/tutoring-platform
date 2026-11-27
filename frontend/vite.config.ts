@@ -14,6 +14,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    setupFiles: ['tests/setup.ts'],
     server: {
       // zod ships CJS + ESM builds; inline it so `import { z }` resolves the ESM
       // named export consistently instead of relying on CJS interop.

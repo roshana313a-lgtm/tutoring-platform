@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useField, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useRouter } from 'vue-router'
@@ -14,11 +15,13 @@ import { useAuthStore } from '../stores/useAuthStore'
 import type { Role } from '../api/auth'
 import { authErrorMessage } from '../utils/authErrorMessage'
 
+const { t } = useI18n()
+
 const registerSchema = z.object({
-  email: z.string().email('Enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z.string().email(t('validation.email')),
+  password: z.string().min(8, t('validation.passwordMin')),
   role: z.enum(['student', 'instructor'], {
-    errorMap: () => ({ message: 'Select Student or Instructor' }),
+    errorMap: () => ({ message: t('validation.roleRequired') }),
   }),
 })
 
@@ -45,11 +48,11 @@ const onSubmit = handleSubmit(async (values) => {
     await auth.register(values)
     // Registration must not sign the user in; they log in with the new credentials.
     auth.logout()
-    successMessage.value = 'ثبت نام با موفقیت انجام شد. در حال انتقال به صفحه ورود...'
+    successMessage.value = t('auth.registerSuccess')
     await new Promise((resolve) => setTimeout(resolve, 1500))
     await router.push('/login')
   } catch (error) {
-    formError.value = authErrorMessage(error)
+    formError.value = t(authErrorMessage(error))
     if (error instanceof ApiError && (error.status === 409 || error.status === 422)) {
       setFieldError('email', formError.value)
     }
@@ -62,14 +65,16 @@ const onSubmit = handleSubmit(async (values) => {
   <main class="auth-page">
     <form class="auth-card" @submit="onSubmit">
       <header class="card-header">
-        <div class="monogram" aria-hidden="true">آ</div>
-        <h1>مؤسسه آموزش آنلاین</h1>
-        <p class="subtitle">ایجاد حساب کاربری</p>
+        <div class="monogram" aria-hidden="true">{{ t('app.monogram') }}</div>
+        <h1>{{ t('app.name') }}</h1>
+        <p class="subtitle">{{ t('auth.registerSubtitle') }}</p>
       </header>
 
-      <nav class="auth-tabs" aria-label="تب های احراز هویت">
-        <RouterLink to="/login" class="tab">ورود</RouterLink>
-        <RouterLink to="/register" class="tab active" aria-current="page">ثبت نام</RouterLink>
+      <nav class="auth-tabs" :aria-label="t('auth.tabsAria')">
+        <RouterLink to="/login" class="tab">{{ t('auth.loginTab') }}</RouterLink>
+        <RouterLink to="/register" class="tab active" aria-current="page">
+          {{ t('auth.registerTab') }}
+        </RouterLink>
       </nav>
 
       <BaseBanner
@@ -88,7 +93,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <BaseInput
         v-model="email"
-        label="ایمیل"
+        :label="t('auth.email')"
         name="email"
         type="email"
         autocomplete="email"
@@ -97,7 +102,7 @@ const onSubmit = handleSubmit(async (values) => {
 
       <BaseInput
         v-model="password"
-        label="رمز عبور"
+        :label="t('auth.password')"
         name="password"
         type="password"
         autocomplete="new-password"
@@ -106,14 +111,19 @@ const onSubmit = handleSubmit(async (values) => {
 
       <BaseInput
         v-model="confirmPassword"
-        label="تکرار رمز عبور"
+        :label="t('auth.confirmPassword')"
         type="password"
         autocomplete="new-password"
       />
 
       <div class="role-group">
-        <span class="field-label">نوع حساب</span>
-        <div class="role-grid" :class="{ 'has-error': Boolean(roleError) }" role="radiogroup" aria-label="نوع حساب">
+        <span class="field-label">{{ t('auth.accountType') }}</span>
+        <div
+          class="role-grid"
+          :class="{ 'has-error': Boolean(roleError) }"
+          role="radiogroup"
+          :aria-label="t('auth.accountType')"
+        >
           <label class="role-card" :class="{ selected: role === 'student' }">
             <input v-model="role" class="sr-only" type="radio" name="role" value="student" />
             <svg
@@ -131,7 +141,7 @@ const onSubmit = handleSubmit(async (values) => {
               <path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5" />
               <path d="M20 8v6" />
             </svg>
-            <span>زبان آموز</span>
+            <span>{{ t('roles.student') }}</span>
           </label>
 
           <label class="role-card" :class="{ selected: role === 'instructor' }">
@@ -150,20 +160,20 @@ const onSubmit = handleSubmit(async (values) => {
               <rect x="3" y="4" width="18" height="13" rx="2" />
               <path d="M8 21h8M12 17v4M7 9h10M7 13h6" />
             </svg>
-            <span>مدرس</span>
+            <span>{{ t('roles.instructor') }}</span>
           </label>
         </div>
         <FormError v-if="roleError" :message="roleError" />
       </div>
 
       <BaseButton type="submit" :loading="submitting">
-        {{ submitting ? 'در حال ثبت نام…' : 'ثبت نام' }}
+        {{ submitting ? t('auth.registerSubmitting') : t('auth.registerTab') }}
       </BaseButton>
 
-      <div class="divider"><span>یا</span></div>
+      <div class="divider"><span>{{ t('common.or') }}</span></div>
 
       <div class="social-buttons">
-        <button type="button" class="social-button" aria-label="ثبت نام با Google">
+        <button type="button" class="social-button" :aria-label="t('auth.registerWithGoogle')">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path
               fill="#4285F4"
@@ -185,7 +195,7 @@ const onSubmit = handleSubmit(async (values) => {
           <span>Google</span>
         </button>
 
-        <button type="button" class="social-button" aria-label="ثبت نام با Apple">
+        <button type="button" class="social-button" :aria-label="t('auth.registerWithApple')">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
             <path
               fill="currentColor"
@@ -197,8 +207,8 @@ const onSubmit = handleSubmit(async (values) => {
       </div>
 
       <p class="auth-link">
-        <span>حساب دارید؟</span>
-        <RouterLink to="/login">وارد شوید</RouterLink>
+        <span>{{ t('auth.haveAccount') }}</span>
+        <RouterLink to="/login">{{ t('auth.goLogin') }}</RouterLink>
       </p>
     </form>
   </main>

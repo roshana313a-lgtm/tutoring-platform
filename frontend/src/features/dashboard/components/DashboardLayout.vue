@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router'
 import {
   Bell,
   BookOpen,
+  Globe,
   CalendarDays,
   ChartNoAxesColumn,
   ChevronDown,
@@ -21,10 +23,11 @@ import {
 
 import { useAuthStore } from '../../auth/stores/useAuthStore'
 import { resolveMediaUrl } from '../../../shared/api/media'
+import { setAppLocale, SUPPORTED_LOCALES, type AppLocale } from '../../../i18n'
 import { dashboardRouteName } from '../roleDashboard'
 
 interface MenuItem {
-  label: string
+  labelKey: string
   to: RouteLocationRaw
   icon: Component
 }
@@ -32,33 +35,34 @@ interface MenuItem {
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 
 const studentMenu: MenuItem[] = [
-  { label: 'جستجوی مدرس', to: { name: 'dashboard-instructor-search' }, icon: Search },
-  { label: 'کلاس‌های من', to: { name: 'dashboard-classes' }, icon: CalendarDays },
-  { label: 'تکالیف من', to: { name: 'dashboard-homework' }, icon: BookOpen },
-  { label: 'پیشرفت من', to: { name: 'dashboard-progress' }, icon: TrendingUp },
-  { label: 'پروفایل من', to: { name: 'profile' }, icon: UserRound },
+  { labelKey: 'nav.instructorSearch', to: { name: 'dashboard-instructor-search' }, icon: Search },
+  { labelKey: 'nav.myClasses', to: { name: 'dashboard-classes' }, icon: CalendarDays },
+  { labelKey: 'nav.myHomework', to: { name: 'dashboard-homework' }, icon: BookOpen },
+  { labelKey: 'nav.myProgress', to: { name: 'dashboard-progress' }, icon: TrendingUp },
+  { labelKey: 'nav.myProfile', to: { name: 'profile' }, icon: UserRound },
 ]
 
 const instructorMenu: MenuItem[] = [
-  { label: 'کلاس‌های من', to: { name: 'dashboard-classes' }, icon: CalendarDays },
-  { label: 'دانشجویان من', to: { name: 'dashboard-students' }, icon: Users },
-  { label: 'ارسال تکلیف', to: { name: 'dashboard-homework-new' }, icon: ClipboardList },
-  { label: 'ارزیابی‌ها', to: { name: 'dashboard-evaluations' }, icon: ClipboardCheck },
-  { label: 'پروفایل من', to: { name: 'profile' }, icon: UserRound },
+  { labelKey: 'nav.myClasses', to: { name: 'dashboard-classes' }, icon: CalendarDays },
+  { labelKey: 'nav.students', to: { name: 'dashboard-students' }, icon: Users },
+  { labelKey: 'nav.submitHomework', to: { name: 'dashboard-homework-new' }, icon: ClipboardList },
+  { labelKey: 'nav.evaluations', to: { name: 'dashboard-evaluations' }, icon: ClipboardCheck },
+  { labelKey: 'nav.myProfile', to: { name: 'profile' }, icon: UserRound },
 ]
 
 const adminMenu: MenuItem[] = [
-  { label: 'مدیریت مدرسان', to: { name: 'dashboard-manage-instructors' }, icon: GraduationCap },
-  { label: 'مدیریت کاربران', to: { name: 'dashboard-admin-users' }, icon: Users },
-  { label: 'کیفیت خدمات', to: { name: 'dashboard-quality' }, icon: ChartNoAxesColumn },
-  { label: 'تنظیمات', to: { name: 'dashboard-admin-settings' }, icon: Settings },
-  { label: 'پروفایل من', to: { name: 'profile' }, icon: UserRound },
+  { labelKey: 'nav.manageInstructors', to: { name: 'dashboard-manage-instructors' }, icon: GraduationCap },
+  { labelKey: 'nav.manageUsers', to: { name: 'dashboard-admin-users' }, icon: Users },
+  { labelKey: 'nav.quality', to: { name: 'dashboard-quality' }, icon: ChartNoAxesColumn },
+  { labelKey: 'nav.settings', to: { name: 'dashboard-admin-settings' }, icon: Settings },
+  { labelKey: 'nav.myProfile', to: { name: 'profile' }, icon: UserRound },
 ]
 
 const dashboardItem = computed<MenuItem>(() => ({
-  label: 'داشبورد',
+  labelKey: 'nav.dashboard',
   to: { name: dashboardRouteName(auth.user?.role) },
   icon: LayoutDashboard,
 }))
@@ -79,11 +83,11 @@ const menuItems = computed<MenuItem[]>(() => {
 const roleLabel = computed(() => {
   switch (auth.user?.role) {
     case 'student':
-      return 'زبان آموز'
+      return t('roles.student')
     case 'instructor':
-      return 'مدرس'
+      return t('roles.instructor')
     case 'admin':
-      return 'مدیر'
+      return t('roles.admin')
     default:
       return '—'
   }
@@ -106,9 +110,18 @@ const settingsRouteName = computed(() =>
 )
 
 const pageTitle = computed(() => {
-  const title = route.meta.title
-  return typeof title === 'string' && title.length > 0 ? title : 'داشبورد'
+  const key = route.meta.title
+  return typeof key === 'string' && key.length > 0 ? t(key) : t('layout.defaultTitle')
 })
+
+const languages = computed(() =>
+  SUPPORTED_LOCALES.map((value) => ({ value, label: t(`layout.languages.${value}`) })),
+)
+
+function changeLocale(event: Event): void {
+  const next = (event.target as HTMLSelectElement).value as AppLocale
+  setAppLocale(next)
+}
 
 async function logout(): Promise<void> {
   auth.logout()
@@ -128,33 +141,33 @@ async function logout(): Promise<void> {
           <path d="M16 27V12" stroke="var(--card-bg)" stroke-width="2" stroke-linecap="round" />
         </svg>
         <div>
-          <strong>مؤسسه آموزش آنلاین</strong>
-          <span>پنل {{ roleLabel }}</span>
+          <strong>{{ t('layout.brand') }}</strong>
+          <span>{{ t('layout.panel', { role: roleLabel }) }}</span>
         </div>
       </div>
 
-      <nav class="sidebar-nav" aria-label="منوی داشبورد">
+      <nav class="sidebar-nav" :aria-label="t('layout.menuAria')">
         <RouterLink
           v-for="item in menuItems"
-          :key="item.label"
+          :key="item.labelKey"
           :to="item.to"
           class="sidebar-link"
           exact-active-class="is-active"
           data-test="sidebar-link"
         >
           <component :is="item.icon" :size="18" :stroke-width="1.9" />
-          <span>{{ item.label }}</span>
+          <span>{{ t(item.labelKey) }}</span>
         </RouterLink>
       </nav>
 
       <div class="sidebar-footer">
         <RouterLink :to="{ name: settingsRouteName }" class="footer-link">
           <Settings :size="17" />
-          <span>تنظیمات</span>
+          <span>{{ t('nav.settings') }}</span>
         </RouterLink>
         <a class="footer-link" href="mailto:support@example.com">
           <LifeBuoy :size="17" />
-          <span>پشتیبانی</span>
+          <span>{{ t('nav.support') }}</span>
         </a>
       </div>
     </aside>
@@ -172,7 +185,7 @@ async function logout(): Promise<void> {
             </svg>
           </span>
           <div>
-            <span class="eyebrow">مؤسسه آموزش آنلاین</span>
+            <span class="eyebrow">{{ t('layout.brand') }}</span>
             <h1>{{ pageTitle }}</h1>
           </div>
         </div>
@@ -180,22 +193,40 @@ async function logout(): Promise<void> {
         <div class="topbar-actions">
           <label class="global-search">
             <Search :size="17" aria-hidden="true" />
-            <input type="search" aria-label="جستجوی سراسری" placeholder="جستجوی سریع..." />
+            <input
+              type="search"
+              :aria-label="t('layout.searchAria')"
+              :placeholder="t('layout.searchPlaceholder')"
+            />
             <kbd>⌘K</kbd>
           </label>
 
-          <button type="button" class="icon-button" aria-label="تنظیمات" data-test="topbar-settings">
+          <button type="button" class="icon-button" :aria-label="t('layout.settingsAria')" data-test="topbar-settings">
             <Settings :size="19" />
           </button>
 
           <button
             type="button"
             class="icon-button"
-            aria-label="اعلانها"
+            :aria-label="t('layout.notificationsAria')"
             data-test="topbar-notifications"
           >
             <Bell :size="19" />
           </button>
+
+          <label class="language-switcher" data-test="language-switcher">
+            <Globe :size="16" aria-hidden="true" />
+            <select
+              :value="locale"
+              :aria-label="t('layout.languageAria')"
+              data-test="language-select"
+              @change="changeLocale"
+            >
+              <option v-for="language in languages" :key="language.value" :value="language.value">
+                {{ language.label }}
+              </option>
+            </select>
+          </label>
 
           <div class="user-menu" data-test="topbar-user">
             <span class="avatar" data-test="topbar-avatar">
@@ -210,7 +241,7 @@ async function logout(): Promise<void> {
           </div>
 
           <button type="button" class="logout-button" data-test="logout" @click="logout">
-            خروج
+            {{ t('layout.logout') }}
           </button>
         </div>
       </header>
@@ -480,6 +511,34 @@ h1 {
   border-color: var(--primary);
   background: var(--primary-light);
   color: var(--primary);
+}
+
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--text-muted);
+}
+
+.language-switcher select {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .language-switcher {
+    padding: 6px 8px;
+  }
 }
 
 .user-menu {

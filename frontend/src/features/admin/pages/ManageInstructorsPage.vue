@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import {
   CheckCircle2,
@@ -16,6 +17,7 @@ import {
   fetchAllInstructors,
   rejectInstructor,
 } from '../api/instructors'
+import { formatNumber } from '../../../i18n/format'
 import { toggleUserSuspension } from '../api/users'
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'suspended'
@@ -23,6 +25,7 @@ type StatusFilter = 'all' | 'pending' | 'approved' | 'suspended'
 const STATUS_FILTERS: StatusFilter[] = ['all', 'pending', 'approved', 'suspended']
 
 const route = useRoute()
+const { t, locale } = useI18n()
 
 // The admin dashboard links here with ?status=pending so the review queue opens directly.
 function filterFromQuery(): StatusFilter {
@@ -40,8 +43,6 @@ const successMessage = ref('')
 const busyId = ref<string | null>(null)
 const confirmRejectId = ref<string | null>(null)
 const filter = ref<StatusFilter>(filterFromQuery())
-
-const rateFormatter = new Intl.NumberFormat('fa-IR')
 
 function displayName(instructor: User): string {
   const fullName = instructor.full_name?.trim()
@@ -68,10 +69,10 @@ const counts = computed(() => {
 })
 
 const filters = computed(() => [
-  { key: 'all' as const, label: 'همه', count: counts.value.all },
-  { key: 'pending' as const, label: 'در انتظار تایید', count: counts.value.pending },
-  { key: 'approved' as const, label: 'تاییدشده', count: counts.value.approved },
-  { key: 'suspended' as const, label: 'معلق', count: counts.value.suspended },
+  { key: 'all' as const, label: t('admin.instructors.filters.all'), count: counts.value.all },
+  { key: 'pending' as const, label: t('admin.instructors.filters.pending'), count: counts.value.pending },
+  { key: 'approved' as const, label: t('admin.instructors.filters.approved'), count: counts.value.approved },
+  { key: 'suspended' as const, label: t('admin.instructors.filters.suspended'), count: counts.value.suspended },
 ])
 
 const visibleInstructors = computed(() =>
@@ -83,18 +84,18 @@ const visibleInstructors = computed(() =>
 function statusLabel(instructor: User): string {
   switch (statusOf(instructor)) {
     case 'suspended':
-      return 'معلق'
+      return t('admin.instructors.filters.suspended')
     case 'approved':
-      return 'تاییدشده'
+      return t('admin.instructors.filters.approved')
     default:
-      return 'در انتظار تایید'
+      return t('admin.instructors.filters.pending')
   }
 }
 
 function rateLabel(instructor: User): string {
   return instructor.hourly_rate > 0
-    ? `${rateFormatter.format(instructor.hourly_rate)} تومان / ساعت`
-    : 'تعیین نشده'
+    ? `${formatNumber(instructor.hourly_rate, locale.value)} ${t('common.perHour')}`
+    : t('admin.instructors.rateUnset')
 }
 
 async function load(): Promise<void> {
@@ -104,7 +105,7 @@ async function load(): Promise<void> {
   try {
     instructors.value = await fetchAllInstructors()
   } catch {
-    loadError.value = 'دریافت فهرست مدرسان ناموفق بود.'
+    loadError.value = t('errors.instructors')
   } finally {
     loading.value = false
   }
@@ -124,7 +125,7 @@ async function run(
     successMessage.value = success
     await load()
   } catch {
-    actionError.value = 'انجام این عملیات ناموفق بود. دوباره تلاش کنید.'
+    actionError.value = t('errors.action')
   } finally {
     busyId.value = null
     confirmRejectId.value = null
@@ -135,7 +136,7 @@ function approve(instructor: User): Promise<void> {
   return run(
     instructor,
     () => approveInstructor(instructor.id),
-    `حساب ${displayName(instructor)} تایید شد.`,
+    t('admin.instructors.approvedMessage', { name: displayName(instructor) }),
   )
 }
 
@@ -143,7 +144,7 @@ function reject(instructor: User): Promise<void> {
   return run(
     instructor,
     () => rejectInstructor(instructor.id),
-    `درخواست ${displayName(instructor)} رد شد.`,
+    t('admin.instructors.rejectedMessage', { name: displayName(instructor) }),
   )
 }
 
@@ -153,8 +154,8 @@ function toggleSuspension(instructor: User): Promise<void> {
     instructor,
     () => toggleUserSuspension(instructor.id),
     suspended
-      ? `دسترسی ${displayName(instructor)} فعال شد.`
-      : `حساب ${displayName(instructor)} معلق شد.`,
+      ? t('admin.instructors.activatedMessage', { name: displayName(instructor) })
+      : t('admin.instructors.suspendedMessage', { name: displayName(instructor) }),
   )
 }
 
@@ -165,13 +166,13 @@ onMounted(load)
   <section class="manage-page" data-test="manage-instructors-page">
     <header class="page-header">
       <div>
-        <p class="eyebrow">مدیریت مدرسان</p>
-        <h2>همه مدرسان</h2>
-        <p class="subtitle">تایید، رد و تعلیق حساب مدرسان مؤسسه</p>
+        <p class="eyebrow">{{ t('admin.instructors.eyebrow') }}</p>
+        <h2>{{ t('admin.instructors.title') }}</h2>
+        <p class="subtitle">{{ t('admin.instructors.subtitle') }}</p>
       </div>
       <span class="counter">
         <GraduationCap :size="15" />
-        {{ counts.all }} مدرس
+        {{ t('admin.instructors.count', { count: formatNumber(counts.all, locale) }) }}
       </span>
     </header>
 
@@ -182,7 +183,7 @@ onMounted(load)
       {{ actionError }}
     </p>
 
-    <div class="toolbar" role="tablist" aria-label="فیلتر وضعیت مدرسان">
+    <div class="toolbar" role="tablist" :aria-label="t('admin.instructors.filtersAria')">
       <button
         v-for="item in filters"
         :key="item.key"
@@ -202,7 +203,7 @@ onMounted(load)
     <div class="panel">
       <p v-if="loading" class="state" data-test="manage-loading">
         <LoaderCircle :size="16" class="spin" />
-        در حال بارگذاری…
+        {{ t('common.loading') }}
       </p>
 
       <p v-else-if="loadError" class="state state-error" role="alert" data-test="manage-error">
@@ -210,18 +211,18 @@ onMounted(load)
       </p>
 
       <p v-else-if="visibleInstructors.length === 0" class="state" data-test="manage-empty">
-        {{ filter === 'all' ? 'هنوز مدرسی ثبت‌نام نکرده است.' : 'مدرسی با این وضعیت وجود ندارد.' }}
+        {{ filter === 'all' ? t('admin.instructors.emptyAll') : t('admin.instructors.emptyFiltered') }}
       </p>
 
       <div v-else class="table-scroll">
         <table class="instructors-table">
           <thead>
             <tr>
-              <th scope="col">نام</th>
-              <th scope="col">ایمیل</th>
-              <th scope="col">وضعیت</th>
-              <th scope="col">نرخ هر ساعت</th>
-              <th scope="col">اقدام</th>
+              <th scope="col">{{ t('admin.instructors.columns.name') }}</th>
+              <th scope="col">{{ t('admin.instructors.columns.email') }}</th>
+              <th scope="col">{{ t('admin.instructors.columns.status') }}</th>
+              <th scope="col">{{ t('admin.instructors.columns.rate') }}</th>
+              <th scope="col">{{ t('admin.instructors.columns.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -247,7 +248,7 @@ onMounted(load)
                     :disabled="busyId === instructor.id"
                     @click="reject(instructor)"
                   >
-                    تایید رد درخواست
+                    {{ t('admin.instructors.confirmReject') }}
                   </button>
                   <button
                     type="button"
@@ -256,7 +257,7 @@ onMounted(load)
                     :disabled="busyId === instructor.id"
                     @click="confirmRejectId = null"
                   >
-                    انصراف
+                    {{ t('common.cancel') }}
                   </button>
                 </div>
                 <div v-else class="actions">
@@ -269,7 +270,7 @@ onMounted(load)
                     @click="approve(instructor)"
                   >
                     <CheckCircle2 :size="15" />
-                    تایید
+                    {{ t('admin.instructors.approve') }}
                   </button>
                   <button
                     v-if="!instructor.is_approved"
@@ -280,7 +281,7 @@ onMounted(load)
                     @click="confirmRejectId = instructor.id"
                   >
                     <UserRoundX :size="15" />
-                    رد
+                    {{ t('admin.instructors.reject') }}
                   </button>
                   <button
                     type="button"
@@ -292,7 +293,7 @@ onMounted(load)
                   >
                     <ShieldCheck v-if="instructor.is_active === false" :size="15" />
                     <ShieldBan v-else :size="15" />
-                    {{ instructor.is_active === false ? 'فعال کردن' : 'تعلیق' }}
+                    {{ instructor.is_active === false ? t('admin.instructors.activate') : t('admin.instructors.suspend') }}
                   </button>
                 </div>
               </td>

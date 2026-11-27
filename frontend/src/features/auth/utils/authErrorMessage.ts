@@ -1,20 +1,21 @@
 import { ApiError } from '../../../shared/api/http'
 
+// Returns a translation key so callers render the message in the active locale.
 export function authErrorMessage(error: unknown): string {
   if (!(error instanceof ApiError)) {
-    return 'خطای نامشخص. لطفاً دوباره تلاش کنید.'
+    return 'errors.unknown'
   }
 
   switch (error.status) {
     case 401:
-      return 'ایمیل یا رمز عبور اشتباه است.'
+      return 'errors.unauthorized'
     case 409:
-      return 'این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید یا ایمیل دیگری انتخاب کنید.'
+      return 'errors.conflict'
     case 422:
-      return 'اطلاعات وارد شده معتبر نیست. لطفاً همه فیلدها را بررسی کنید.'
+      return 'errors.invalid'
     case 0:
-      return 'خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.'
+      return 'errors.network'
     default:
-      return 'خطای نامشخص. لطفاً دوباره تلاش کنید.'
+      return 'errors.unknown'
   }
 }

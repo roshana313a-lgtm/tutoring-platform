@@ -250,7 +250,7 @@ describe('admin panel routing and navigation', () => {
     await router.isReady()
 
     expect(router.currentRoute.value.name).toBe('dashboard-admin-users')
-    expect(router.currentRoute.value.meta.title).toBe('مدیریت کاربران')
+    expect(router.currentRoute.value.meta.title).toBe('nav.titles.users')
 
     await router.push('/dashboard/admin/settings')
     expect(router.currentRoute.value.name).toBe('dashboard-admin-settings')
