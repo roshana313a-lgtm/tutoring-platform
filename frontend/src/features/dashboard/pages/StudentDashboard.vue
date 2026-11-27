@@ -15,6 +15,7 @@ import { resolveMediaUrl } from '../../../shared/api/media'
 import { formatNumber } from '../../../i18n/format'
 import { fetchStudentStats, type StudentStats } from '../api/stats'
 import { fetchInstructors, type InstructorListItem } from '../../instructors/api/instructors'
+import ProfileCompletionBanner from '../components/ProfileCompletionBanner.vue'
 
 const auth = useAuthStore()
 const { t, locale } = useI18n()
@@ -119,6 +120,8 @@ onMounted(() => {
       </div>
       <span class="role-chip">{{ t('roles.student') }}</span>
     </header>
+
+    <ProfileCompletionBanner />
 
     <p v-if="statsError" class="banner" role="alert" data-test="student-stats-error">
       {{ statsError }}

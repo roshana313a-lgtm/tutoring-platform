@@ -151,6 +151,10 @@
   "dashboard": {
     "welcome": "Welcome, {name}",
     "loading": "Loading…",
+    "profileBanner": {
+      "text": "Your profile is incomplete. Please add your details to use every feature.",
+      "action": "Complete profile"
+    },
     "admin": {
       "eyebrow": "Admin view",
       "subtitle": "Live statistics for the institute's users and instructors",
