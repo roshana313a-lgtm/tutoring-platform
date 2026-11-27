@@ -19,12 +19,13 @@ const admin: User = {
 }
 
 const stored = {
-  platform_name: 'آکادمی پارس',
+  institute_name: 'آکادمی پارس',
   support_email: 'help@pars.example.com',
-  platform_description: 'مرکز آموزش زبان‌های خارجی',
+  default_class_duration: 60,
+  min_cancellation_hours: 24,
   default_hourly_rate: 350000,
   currency: 'تومان',
-  min_withdrawal_amount: 100000,
+  commission_rate: 15,
   enable_email_notifications: true,
   maintenance_mode: false,
 }
@@ -62,20 +63,25 @@ afterEach(() => {
 })
 
 describe('AdminSettingsPage tabs', () => {
-  it('opens on the general tab with only those fields rendered', async () => {
+  it('opens on the academic tab with the institute fields', async () => {
     vi.spyOn(http, 'get').mockResolvedValue(stored)
     const wrapper = await mountPage()
 
-    expect(wrapper.get('[data-test="settings-tab-general"]').attributes('aria-selected')).toBe('true')
-    expect(wrapper.find('[data-test="settings-panel-general"]').exists()).toBe(true)
+    expect(wrapper.get('[data-test="settings-tab-academic"]').attributes('aria-selected')).toBe(
+      'true',
+    )
+    expect(wrapper.get('[data-test="settings-tab-academic"]').text()).toContain('آموزشی')
+    expect(wrapper.find('[data-test="settings-panel-academic"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="settings-panel-financial"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="settings-panel-system"]').exists()).toBe(false)
-    expect(inputValue(wrapper, 'platform-name')).toBe(stored.platform_name)
-    expect(inputValue(wrapper, 'platform-description')).toBe(stored.platform_description)
+
+    expect(inputValue(wrapper, 'institute-name')).toBe(stored.institute_name)
     expect(inputValue(wrapper, 'support-email')).toBe(stored.support_email)
+    expect(inputValue(wrapper, 'class-duration')).toBe(String(stored.default_class_duration))
+    expect(inputValue(wrapper, 'cancellation-hours')).toBe(String(stored.min_cancellation_hours))
   })
 
-  it('switches to the financial tab and keeps the loaded values', async () => {
+  it('switches to the financial tab and shows the loaded money settings', async () => {
     vi.spyOn(http, 'get').mockResolvedValue(stored)
     const wrapper = await mountPage()
 
@@ -84,11 +90,12 @@ describe('AdminSettingsPage tabs', () => {
     expect(wrapper.get('[data-test="settings-tab-financial"]').attributes('aria-selected')).toBe(
       'true',
     )
-    expect(wrapper.find('[data-test="settings-panel-general"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="settings-panel-academic"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="settings-panel-financial"]').exists()).toBe(true)
+
     expect(inputValue(wrapper, 'default-rate')).toBe(String(stored.default_hourly_rate))
     expect(inputValue(wrapper, 'currency')).toBe(stored.currency)
-    expect(inputValue(wrapper, 'min-withdrawal')).toBe(String(stored.min_withdrawal_amount))
+    expect(inputValue(wrapper, 'commission-rate')).toBe(String(stored.commission_rate))
   })
 
   it('switches to the system tab and shows both toggles in their loaded state', async () => {
@@ -128,33 +135,34 @@ describe('AdminSettingsPage tabs', () => {
 })
 
 describe('AdminSettingsPage save', () => {
-  it('sends every setting in one PUT request', async () => {
+  it('sends every institute setting in one PUT request', async () => {
     vi.spyOn(http, 'get').mockResolvedValue(stored)
     const put = vi.spyOn(http, 'put').mockResolvedValue({
       ...stored,
-      currency: 'ریال',
-      min_withdrawal_amount: 200000,
+      institute_name: 'آکادمی زبان پارس',
+      commission_rate: 20,
       maintenance_mode: true,
     })
 
     const wrapper = await mountPage()
 
-    await wrapper.get('[data-test="platform-name"]').setValue('آکادمی زبان پارس')
+    await wrapper.get('[data-test="institute-name"]').setValue('آکادمی زبان پارس')
+    await wrapper.get('[data-test="class-duration"]').setValue('90')
     await wrapper.get('[data-test="settings-tab-financial"]').trigger('click')
-    await wrapper.get('[data-test="currency"]').setValue('ریال')
-    await wrapper.get('[data-test="min-withdrawal"]').setValue('200000')
+    await wrapper.get('[data-test="commission-rate"]').setValue('20')
     await wrapper.get('[data-test="settings-tab-system"]').trigger('click')
     await wrapper.get('[data-test="maintenance-toggle"]').setValue(true)
     await wrapper.get('[data-test="settings-form"]').trigger('submit')
     await settle()
 
     expect(put).toHaveBeenCalledWith('/api/v1/admin/settings', {
-      platform_name: 'آکادمی زبان پارس',
+      institute_name: 'آکادمی زبان پارس',
       support_email: stored.support_email,
-      platform_description: stored.platform_description,
+      default_class_duration: 90,
+      min_cancellation_hours: stored.min_cancellation_hours,
       default_hourly_rate: stored.default_hourly_rate,
-      currency: 'ریال',
-      min_withdrawal_amount: 200000,
+      currency: stored.currency,
+      commission_rate: 20,
       enable_email_notifications: true,
       maintenance_mode: true,
     })
@@ -162,10 +170,10 @@ describe('AdminSettingsPage save', () => {
 
   it('shows a success toast with the saved values and lets it be dismissed', async () => {
     vi.spyOn(http, 'get').mockResolvedValue(stored)
-    vi.spyOn(http, 'put').mockResolvedValue({ ...stored, platform_name: 'آکادمی زبان پارس' })
+    vi.spyOn(http, 'put').mockResolvedValue({ ...stored, institute_name: 'آکادمی زبان پارس' })
 
     const wrapper = await mountPage()
-    await wrapper.get('[data-test="platform-name"]').setValue('آکادمی زبان پارس')
+    await wrapper.get('[data-test="institute-name"]').setValue('آکادمی زبان پارس')
     await wrapper.get('[data-test="settings-form"]').trigger('submit')
     await settle()
 
@@ -182,38 +190,41 @@ describe('AdminSettingsPage save', () => {
     vi.spyOn(http, 'put').mockRejectedValue(new Error('boom'))
 
     const wrapper = await mountPage()
-    await wrapper.get('[data-test="platform-name"]').setValue('آکادمی زبان پارس')
+    await wrapper.get('[data-test="institute-name"]').setValue('آکادمی زبان پارس')
     await wrapper.get('[data-test="settings-form"]').trigger('submit')
     await settle()
 
     const toast = wrapper.get('[data-test="settings-error"]')
     expect(toast.text()).toContain('ذخیره تنظیمات ناموفق بود')
     expect(toast.classes()).toContain('toast-error')
-    expect(inputValue(wrapper, 'platform-name')).toBe('آکادمی زبان پارس')
+    expect(inputValue(wrapper, 'institute-name')).toBe('آکادمی زبان پارس')
   })
 
-  it('does not call the API when a required field is empty or invalid', async () => {
+  it('does not call the API when the commission is out of range', async () => {
     vi.spyOn(http, 'get').mockResolvedValue(stored)
     const put = vi.spyOn(http, 'put').mockResolvedValue(stored)
 
     const wrapper = await mountPage()
     await wrapper.get('[data-test="settings-tab-financial"]').trigger('click')
-    await wrapper.get('[data-test="currency"]').setValue('   ')
+    await wrapper.get('[data-test="commission-rate"]').setValue('120')
     await wrapper.get('[data-test="settings-form"]').trigger('submit')
     await settle()
 
     expect(put).not.toHaveBeenCalled()
-    expect(wrapper.get('[data-test="currency-error"]').text()).toContain('واحد پول')
+    expect(wrapper.get('[data-test="commission-rate-error"]').text()).toContain('کمیسیون')
+  })
 
-    vi.restoreAllMocks()
+  it('does not call the API when the institute name is empty', async () => {
     vi.spyOn(http, 'get').mockResolvedValue(stored)
-    const secondPut = vi.spyOn(http, 'put').mockResolvedValue(stored)
-    const second = await mountPage()
-    await second.get('[data-test="platform-description"]').setValue('x'.repeat(1001))
-    await second.get('[data-test="settings-form"]').trigger('submit')
+    const put = vi.spyOn(http, 'put').mockResolvedValue(stored)
+
+    const wrapper = await mountPage()
+    await wrapper.get('[data-test="institute-name"]').setValue('   ')
+    await wrapper.get('[data-test="settings-form"]').trigger('submit')
     await settle()
 
-    expect(secondPut).not.toHaveBeenCalled()
-    expect(second.get('[data-test="platform-description-error"]').text()).toContain('۱۰۰۰')
+    expect(put).not.toHaveBeenCalled()
+    expect(wrapper.get('[data-test="institute-name-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="settings-panel-academic"]').exists()).toBe(true)
   })
 })

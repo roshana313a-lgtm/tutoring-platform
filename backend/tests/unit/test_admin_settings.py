@@ -1,4 +1,4 @@
-"""Contract tests for admin platform settings (Feature 2f + settings expansion)."""
+"""Contract tests for admin platform settings (Feature 2f / institute settings)."""
 
 from collections.abc import Awaitable, Callable
 
@@ -15,14 +15,27 @@ UserFactory = Callable[[str, str], Awaitable[User]]
 SessionFactory = async_sessionmaker[AsyncSession]
 
 DEFAULT_PAYLOAD = {
-    "platform_name": DEFAULT_SETTINGS["platform_name"],
+    "institute_name": DEFAULT_SETTINGS["institute_name"],
     "support_email": DEFAULT_SETTINGS["support_email"],
-    "platform_description": "",
-    "default_hourly_rate": int(DEFAULT_SETTINGS["default_hourly_rate"]),
-    "currency": DEFAULT_SETTINGS["currency"],
-    "min_withdrawal_amount": int(DEFAULT_SETTINGS["min_withdrawal_amount"]),
+    "default_class_duration": 60,
+    "min_cancellation_hours": 24,
+    "default_hourly_rate": 250000,
+    "currency": "تومان",
+    "commission_rate": 10,
     "enable_email_notifications": True,
     "maintenance_mode": False,
+}
+
+FULL_UPDATE = {
+    "institute_name": "آکادمی زبان پارس",
+    "support_email": "help@pars.example.com",
+    "default_class_duration": 90,
+    "min_cancellation_hours": 48,
+    "default_hourly_rate": 350000,
+    "currency": "ریال",
+    "commission_rate": 15,
+    "enable_email_notifications": False,
+    "maintenance_mode": True,
 }
 
 
@@ -55,30 +68,29 @@ async def test_settings_defaults_when_nothing_is_stored(
 
 
 @pytest.mark.asyncio
+async def test_defaults_match_the_lms_standards() -> None:
+    assert DEFAULT_PAYLOAD["default_class_duration"] == 60
+    assert DEFAULT_PAYLOAD["min_cancellation_hours"] == 24
+    assert DEFAULT_PAYLOAD["currency"] == "تومان"
+    assert DEFAULT_PAYLOAD["commission_rate"] == 10
+    assert DEFAULT_PAYLOAD["maintenance_mode"] is False
+
+
+@pytest.mark.asyncio
 async def test_admin_can_update_settings_and_read_them_back(
     client: AsyncClient,
     user_factory: UserFactory,
 ) -> None:
     headers = await admin_headers(user_factory)
-    payload = {
-        "platform_name": "آکادمی زبان پارس",
-        "support_email": "help@pars.example.com",
-        "platform_description": "مرکز آموزش زبان‌های خارجی پارس",
-        "default_hourly_rate": 350000,
-        "currency": "ریال",
-        "min_withdrawal_amount": 150000,
-        "enable_email_notifications": False,
-        "maintenance_mode": True,
-    }
 
-    updated = await client.put("/api/v1/admin/settings", json=payload, headers=headers)
+    updated = await client.put("/api/v1/admin/settings", json=FULL_UPDATE, headers=headers)
 
     assert updated.status_code == 200
-    assert updated.json() == payload
+    assert updated.json() == FULL_UPDATE
 
     fetched = await client.get("/api/v1/admin/settings", headers=headers)
     assert fetched.status_code == 200
-    assert fetched.json() == payload
+    assert fetched.json() == FULL_UPDATE
 
 
 @pytest.mark.asyncio
@@ -90,9 +102,9 @@ async def test_partial_settings_update_keeps_the_other_values(
     await client.put(
         "/api/v1/admin/settings",
         json={
-            "platform_name": "آکادمی پارس",
-            "default_hourly_rate": 300000,
-            "currency": "دلار",
+            "institute_name": "آکادمی پارس",
+            "default_class_duration": 45,
+            "commission_rate": 20,
             "maintenance_mode": True,
         },
         headers=headers,
@@ -100,18 +112,19 @@ async def test_partial_settings_update_keeps_the_other_values(
 
     response = await client.put(
         "/api/v1/admin/settings",
-        json={"support_email": "support@pars.example.com", "min_withdrawal_amount": 50000},
+        json={"support_email": "support@pars.example.com", "min_cancellation_hours": 12},
         headers=headers,
     )
 
     assert response.status_code == 200
     body = response.json()
-    assert body["platform_name"] == "آکادمی پارس"
-    assert body["default_hourly_rate"] == 300000
-    assert body["currency"] == "دلار"
+    assert body["institute_name"] == "آکادمی پارس"
+    assert body["default_class_duration"] == 45
+    assert body["commission_rate"] == 20
     assert body["maintenance_mode"] is True
-    assert body["min_withdrawal_amount"] == 50000
+    assert body["min_cancellation_hours"] == 12
     assert body["support_email"] == "support@pars.example.com"
+    assert body["default_hourly_rate"] == DEFAULT_PAYLOAD["default_hourly_rate"]
 
 
 @pytest.mark.asyncio
@@ -123,7 +136,11 @@ async def test_booleans_are_stored_as_settings_strings(
     headers = await admin_headers(user_factory)
     await client.put(
         "/api/v1/admin/settings",
-        json={"enable_email_notifications": False, "maintenance_mode": True},
+        json={
+            "enable_email_notifications": False,
+            "maintenance_mode": True,
+            "commission_rate": 15,
+        },
         headers=headers,
     )
 
@@ -132,6 +149,7 @@ async def test_booleans_are_stored_as_settings_strings(
 
     assert stored["enable_email_notifications"] == "false"
     assert stored["maintenance_mode"] == "true"
+    assert stored["commission_rate"] == "15"
 
 
 @pytest.mark.asyncio
@@ -139,14 +157,17 @@ async def test_booleans_are_stored_as_settings_strings(
     "payload",
     [
         {"support_email": "not-an-email"},
+        {"institute_name": ""},
+        {"institute_name": "   "},
+        {"default_class_duration": 0},
+        {"default_class_duration": 2000},
+        {"min_cancellation_hours": -1},
+        {"min_cancellation_hours": 1000},
         {"default_hourly_rate": -1},
-        {"min_withdrawal_amount": -1},
-        {"platform_name": ""},
-        {"platform_name": "   "},
-        {"platform_description": "x" * 1001},
         {"currency": ""},
-        {"currency": "   "},
         {"currency": "x" * 17},
+        {"commission_rate": -1},
+        {"commission_rate": 101},
         {"enable_email_notifications": "yes"},
         {"maintenance_mode": "maybe"},
         {"unknown_setting": "x"},
@@ -183,7 +204,7 @@ async def test_only_admin_can_read_or_update_settings(
     read = await client.get("/api/v1/admin/settings", headers=headers)
     write = await client.put(
         "/api/v1/admin/settings",
-        json={"platform_name": "hacked"},
+        json={"institute_name": "hacked"},
         headers=headers,
     )
 
@@ -195,7 +216,7 @@ async def test_only_admin_can_read_or_update_settings(
 @pytest.mark.asyncio
 async def test_settings_endpoints_require_authentication(client: AsyncClient) -> None:
     read = await client.get("/api/v1/admin/settings")
-    write = await client.put("/api/v1/admin/settings", json={"platform_name": "x"})
+    write = await client.put("/api/v1/admin/settings", json={"institute_name": "x"})
 
     for response in (read, write):
         assert response.status_code == 401

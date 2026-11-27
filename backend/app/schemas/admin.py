@@ -2,12 +2,13 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, StrictBool
 
 
 class PlatformSettingsResponse(BaseModel):
-    platform_name: str
+    institute_name: str
     support_email: EmailStr
-    platform_description: str
+    default_class_duration: int
+    min_cancellation_hours: int
     default_hourly_rate: int
     currency: str
-    min_withdrawal_amount: int
+    commission_rate: int
     enable_email_notifications: bool
     maintenance_mode: bool
 
@@ -21,11 +22,15 @@ class PlatformSettingsUpdate(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    platform_name: str | None = Field(default=None, min_length=1, max_length=120)
+    institute_name: str | None = Field(default=None, min_length=1, max_length=120)
     support_email: EmailStr | None = None
-    platform_description: str | None = Field(default=None, max_length=1000)
+    # Class length in minutes, 1 minute to a full day.
+    default_class_duration: int | None = Field(default=None, ge=1, le=1440)
+    # Free-cancellation window before the class, up to 30 days.
+    min_cancellation_hours: int | None = Field(default=None, ge=0, le=720)
     default_hourly_rate: int | None = Field(default=None, ge=0, le=1_000_000_000)
     currency: str | None = Field(default=None, min_length=1, max_length=16)
-    min_withdrawal_amount: int | None = Field(default=None, ge=0, le=1_000_000_000)
+    # Institute's share of each class, in percent.
+    commission_rate: int | None = Field(default=None, ge=0, le=100)
     enable_email_notifications: StrictBool | None = None
     maintenance_mode: StrictBool | None = None

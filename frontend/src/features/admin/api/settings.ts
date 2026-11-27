@@ -1,12 +1,13 @@
 import { http } from '../../../shared/api/http'
 
 export interface PlatformSettings {
-  platform_name: string
+  institute_name: string
   support_email: string
-  platform_description: string
+  default_class_duration: number
+  min_cancellation_hours: number
   default_hourly_rate: number
   currency: string
-  min_withdrawal_amount: number
+  commission_rate: number
   enable_email_notifications: boolean
   maintenance_mode: boolean
 }
