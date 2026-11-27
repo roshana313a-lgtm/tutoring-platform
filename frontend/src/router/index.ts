@@ -16,6 +16,8 @@ const ServiceQualityPage = () => import('../features/admin/pages/ServiceQualityP
 const ComplaintsPage = () => import('../features/admin/pages/ComplaintsPage.vue')
 const SupportPage = () => import('../features/support/pages/SupportPage.vue')
 const ProfilePage = () => import('../features/profile/pages/ProfilePage.vue')
+const InstructorDiscoveryPage = () => import('../features/instructors/pages/InstructorDiscoveryPage.vue')
+const InstructorDetailPage = () => import('../features/instructors/pages/InstructorDetailPage.vue')
 
 export const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/login' },
@@ -77,9 +79,21 @@ export const routes: RouteRecordRaw[] = [
         redirect: { name: 'profile' },
       },
       {
+        // Legacy path kept as a redirect so older links keep working.
         path: 'instructor-search',
         name: 'dashboard-instructor-search',
-        component: PlaceholderPage,
+        redirect: { name: 'dashboard-student-discover' },
+      },
+      {
+        path: 'student/discover',
+        name: 'dashboard-student-discover',
+        component: InstructorDiscoveryPage,
+        meta: { title: 'nav.titles.instructorSearch' },
+      },
+      {
+        path: 'student/discover/:id',
+        name: 'dashboard-student-discover-detail',
+        component: InstructorDetailPage,
         meta: { title: 'nav.titles.instructorSearch' },
       },
       {

@@ -39,7 +39,7 @@ const router = useRouter()
 const { t, locale } = useI18n()
 
 const studentMenu: MenuItem[] = [
-  { labelKey: 'nav.instructorSearch', to: { name: 'dashboard-instructor-search' }, icon: Search },
+  { labelKey: 'nav.instructorSearch', to: { name: 'dashboard-student-discover' }, icon: Search },
   { labelKey: 'nav.myClasses', to: { name: 'dashboard-classes' }, icon: CalendarDays },
   { labelKey: 'nav.myHomework', to: { name: 'dashboard-homework' }, icon: BookOpen },
   { labelKey: 'nav.myProgress', to: { name: 'dashboard-progress' }, icon: TrendingUp },

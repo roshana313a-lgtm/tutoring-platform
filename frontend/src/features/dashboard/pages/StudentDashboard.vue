@@ -141,7 +141,7 @@ onMounted(() => {
           <h3>{{ t('dashboard.student.instructors.title') }}</h3>
           <p>{{ t('dashboard.student.instructors.subtitle') }}</p>
         </div>
-        <RouterLink :to="{ name: 'dashboard-instructor-search' }" class="panel-link">
+        <RouterLink :to="{ name: 'dashboard-student-discover' }" class="panel-link">
           {{ t('dashboard.student.instructors.search') }}
           <ChevronLeft :size="15" />
         </RouterLink>
@@ -181,7 +181,10 @@ onMounted(() => {
             <span class="instructor-field">{{ instructorLanguages(instructor) }}</span>
           </div>
           <span class="instructor-rate">{{ instructorRate(instructor) }}</span>
-          <RouterLink :to="{ name: 'dashboard-instructor-search' }" class="instructor-action">
+          <RouterLink
+            :to="{ name: 'dashboard-student-discover-detail', params: { id: instructor.id } }"
+            class="instructor-action"
+          >
             {{ t('dashboard.student.instructors.viewProfile') }}
           </RouterLink>
         </li>

@@ -89,7 +89,9 @@ async def test_only_approved_and_active_instructors_are_listed(
         "hourly_rate",
         "education_level",
         "avatar_url",
+        "average_rating",
     }
+    assert listed["average_rating"] is None
     assert pending["user"]["email"] == "pending-instructor@example.com"
 
 

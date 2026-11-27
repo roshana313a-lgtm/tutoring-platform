@@ -7,6 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 
 
+def _matches_term(instructor: User, term: str) -> bool:
+    """Case-insensitive substring match on the name or any teaching language."""
+    needle = term.casefold()
+    if needle in instructor.full_name.casefold():
+        return True
+
+    languages = instructor.teaching_languages or []
+    return any(needle in str(language).casefold() for language in languages)
+
+
 class UserRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -55,18 +65,50 @@ class UserRepository:
             or 0
         )
 
-    async def list_approved_instructors(self) -> list[User]:
-        """Approved, active instructors — the only ones allowed in discovery."""
+    async def list_approved_instructors(
+        self,
+        *,
+        search: str | None = None,
+        max_price: int | None = None,
+    ) -> list[User]:
+        """Approved, active instructors — the only ones allowed in discovery.
+
+        `search` matches the full name or any teaching language; `max_price`
+        caps the hourly rate. Both are optional and combine with AND.
+        """
+        statement = select(User).where(
+            User.role == "instructor",
+            User.is_approved.is_(True),
+            User.is_active.is_(True),
+        )
+
+        if max_price is not None:
+            statement = statement.where(User.hourly_rate <= max_price)
+
+        result = await self.db.execute(statement.order_by(User.full_name, User.email))
+        instructors = list(result.scalars().all())
+
+        # The languages sit in a JSON column whose text form escapes non-ASCII
+        # characters, so a portable SQL LIKE cannot see them (a Persian language
+        # would never match). Matching the short result set here keeps the search
+        # dialect-independent, as ADR-005 requires.
+        term = (search or "").strip()
+        if term:
+            instructors = [item for item in instructors if _matches_term(item, term)]
+
+        return instructors
+
+    async def get_approved_instructor(self, instructor_id: uuid.UUID) -> User | None:
+        """One approved, active instructor, or None when it is not discoverable."""
         result = await self.db.execute(
-            select(User)
-            .where(
+            select(User).where(
+                User.id == instructor_id,
                 User.role == "instructor",
                 User.is_approved.is_(True),
                 User.is_active.is_(True),
             )
-            .order_by(User.full_name, User.email)
         )
-        return list(result.scalars().all())
+        return result.scalar_one_or_none()
 
     async def list_role(self, role: str) -> list[User]:
         """Every account holding `role`, newest first (approved, pending, suspended)."""
