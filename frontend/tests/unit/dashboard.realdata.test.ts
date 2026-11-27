@@ -31,6 +31,7 @@ interface ApiStub {
   instructor?: unknown
   student?: unknown
   instructors?: unknown
+  users?: unknown
   fail?: boolean
 }
 
@@ -55,6 +56,8 @@ async function mountDashboard(
         return Promise.resolve(stub.student)
       case '/api/v1/instructors':
         return Promise.resolve(stub.instructors ?? [])
+      case '/api/v1/admin/users':
+        return Promise.resolve(stub.users ?? [])
       default:
         return Promise.reject(new Error(`unexpected url: ${url}`))
     }
@@ -90,6 +93,56 @@ describe('admin dashboard real stats', () => {
     const pendingCard = wrapper.get('[data-test="admin-pending-instructors-link"]')
     expect(pendingCard.attributes('href')).toBe('/dashboard/manage-instructors?status=pending')
     expect(pendingCard.get('[data-test="stat-value"]').text()).toBe(fa(1))
+  })
+
+  it('links the quick actions to the matching admin pages', async () => {
+    const wrapper = await mountDashboard(AdminDashboard, 'admin', {
+      admin: { pending_instructors: 1, total_users: 5, active_classes: 0 },
+    })
+
+    expect(wrapper.get('[data-test="quick-action-approve"]').attributes('href')).toBe(
+      '/dashboard/manage-instructors?status=pending',
+    )
+    expect(wrapper.get('[data-test="quick-action-users"]').attributes('href')).toBe(
+      '/dashboard/admin/users',
+    )
+    expect(wrapper.get('[data-test="quick-action-settings"]').attributes('href')).toBe(
+      '/dashboard/admin/settings',
+    )
+  })
+
+  it('shows the five most recent registrations with a link to user management', async () => {
+    const registration = (id: string, email: string, createdAt: string, role: 'student' | 'instructor' = 'student') => ({
+      id,
+      email,
+      role,
+      created_at: createdAt,
+      full_name: email.split('@')[0],
+    })
+
+    const wrapper = await mountDashboard(AdminDashboard, 'admin', {
+      admin: { pending_instructors: 0, total_users: 6, active_classes: 0 },
+      users: [
+        registration('u-3', 'third@example.com', '2026-11-24T10:00:00Z'),
+        registration('u-1', 'newest@example.com', '2026-11-26T10:00:00Z', 'instructor'),
+        registration('u-6', 'oldest@example.com', '2026-11-20T10:00:00Z'),
+        registration('u-2', 'second@example.com', '2026-11-25T10:00:00Z'),
+        registration('u-5', 'fifth@example.com', '2026-11-22T10:00:00Z'),
+        registration('u-4', 'fourth@example.com', '2026-11-23T10:00:00Z'),
+      ],
+    })
+
+    const rows = wrapper.findAll('[data-test="recent-user"]')
+    expect(rows).toHaveLength(5)
+    expect(rows[0]?.text()).toContain('newest@example.com')
+    expect(rows[0]?.text()).toContain('مدرس')
+    expect(rows[1]?.text()).toContain('second@example.com')
+    expect(rows[4]?.text()).toContain('fifth@example.com')
+    expect(wrapper.text()).not.toContain('oldest@example.com')
+
+    expect(wrapper.get('[data-test="recent-view-all"]').attributes('href')).toBe(
+      '/dashboard/admin/users',
+    )
   })
 
   it('never shows a hardcoded value when the API fails', async () => {
